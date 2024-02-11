@@ -6,10 +6,14 @@ using UnityEngine;
 public class Particle : MonoBehaviour
 {
     private SphereCollider col;
-
+    public Gradient gradient;
     public Vector3 Position;
     public Vector3 Velocity;
     public Color Colour;
+    
+
+    // Set up color keys and alpha keys in the inspector or programmatically
+    
 
     public float lifeTime;
     public float size;
@@ -25,20 +29,25 @@ public class Particle : MonoBehaviour
         foreach (Renderer r in rends)
         {
             r.material.color = Colour;
-
+            
         }
 
+        gradient.SetKeys(
+                new GradientColorKey[] { new GradientColorKey(Color.red, 0f), new GradientColorKey(Color.yellow, 0.5f), new GradientColorKey(Color.red, 1f) },
+                new GradientAlphaKey[] { new GradientAlphaKey(1f, 0f), new GradientAlphaKey(0.5f, 0.5f), new GradientAlphaKey(0f, 1f) }
+        );
+
         size = Random.Range(MinSize, MaxSize);
+        transform.localScale = Vector3.one * size;
+
         col=GetComponent<SphereCollider>();
         col.radius = size + 0.05f;
 
         lifeTime = initLifeTime;
     }
-    void Awake()
+    void Update()
     {
-        
-        
-        
+        transform.position = Position;
+        transform.localScale= Vector3.one * size;
     }
-
 }
