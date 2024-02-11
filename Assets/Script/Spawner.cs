@@ -48,14 +48,24 @@ public class Spawner : MonoBehaviour
             particles[i].Position += particles[i].Velocity * Time.deltaTime;
         }*/
     }
+    private void CreateParticle()
+    {
+        GameObject gameObject = Instantiate(prefab);
+        gameObject.transform.position = Random.insideUnitSphere * fireSpawnRadius;
 
+        Particle p = gameObject.GetComponent<Particle>();
+        p.InitialiseParticles(transform.position, MaximumSize, MinnimumSize, initialLifeTime);
+
+        p.transform.SetParent(transform);
+        particles.Add(p);
+    }
     void UpdateParticleLifetime()
     {
-        for (int i = 0; i < NumberOfParticles; ++i)
+        foreach (Particle p in particles )
         {
-            particles[i].lifeTime -= Time.deltaTime;
+            p.lifeTime -= Time.deltaTime;
 
-            if (particles[i].lifeTime <= 0f)
+            if (p.lifeTime <= 0f)
             {
                 // Recycle or respawn the particle
                 SpawnParticles();
@@ -64,13 +74,13 @@ public class Spawner : MonoBehaviour
     }
     void UpdateParticleVisuals()
     {
-        for (int i = 0; i < NumberOfParticles; ++i)
-        {
-            float normalizedLifetime = 1f - particles[i].lifeTime / initialLifeTime;
+        foreach(Particle p in particles){
+            float normalizedLifetime = 1f - p.lifeTime / initialLifeTime;
 
             // Update particle color and size based on normalized lifetime
-            particles[i].Colour = particles[i].gradient.Evaluate(normalizedLifetime);
-            particles[i].size = Mathf.Lerp(MinnimumSize, MaximumSize, normalizedLifetime);
+            Color value = p.gradient.Evaluate(normalizedLifetime);
+            p.Colour = value;
+            p.size = Mathf.Lerp(MinnimumSize, MaximumSize, normalizedLifetime);
         }
     }
     void Start()
@@ -79,6 +89,27 @@ public class Spawner : MonoBehaviour
         
         SpawnParticles();
     }
+    void RemoveExpiredParticles()
+    {
+        // Use a separate list to avoid modifying the original list while iterating
+        List<Particle> particlesToRemove = new List<Particle>();
+
+        foreach (Particle particle in particles)
+        {
+            // Check if the particle's lifetime has expired
+            if (particles.Count >= 100)
+            {
+                particlesToRemove.Add(particle);
+            }
+        }
+
+        // Remove or deactivate the expired particles
+        foreach (Particle particleToRemove in particlesToRemove)
+        {
+            particles.Remove(particleToRemove);
+            Destroy(particleToRemove.gameObject); // Or deactivate the game object
+        }
+    }
 
     // Update is called once per frame
     void Update()
@@ -86,5 +117,6 @@ public class Spawner : MonoBehaviour
         UpdateParticleVisuals();
         UpdateParticleMovement();
         UpdateParticleLifetime();
+        //RemoveExpiredParticles();
     }
 }
