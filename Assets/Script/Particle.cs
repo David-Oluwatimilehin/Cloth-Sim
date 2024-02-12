@@ -22,8 +22,8 @@ public class Particle : MonoBehaviour
     public void InitialiseParticles(Vector3 spawnPosition,float MaxSize,float MinSize, float initLifeTime)
     {
         Position = spawnPosition;
-        Velocity = new Vector3(Random.Range(-1f, 1f), buoyancy + Random.Range(1f, 2f), Random.Range(-1f, 1f));
-        Colour = Color.Lerp(Color.yellow, Color.red, initLifeTime);
+        Velocity = new Vector3(Random.Range(1f, 1f), buoyancy + Random.Range(-2f, 2f), Random.Range(-1f, 1f));
+        Colour = Color.Lerp(Color.yellow, Color.red,Random.value);
 
         Renderer[] rends = GetComponents<Renderer>();
         foreach (Renderer r in rends)

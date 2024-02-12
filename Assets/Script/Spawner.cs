@@ -20,7 +20,8 @@ public class Spawner : MonoBehaviour
     private void SpawnParticles()
     {
         GameObject gameObject = Instantiate(prefab);
-        gameObject.transform.position = Random.insideUnitSphere * fireSpawnRadius;
+        gameObject.transform.position = transform.position *Random.insideUnitCircle * fireSpawnRadius;
+        
         
         Particle p = gameObject.GetComponent<Particle>();
         p.InitialiseParticles(transform.position, MaximumSize, MinnimumSize, initialLifeTime);
