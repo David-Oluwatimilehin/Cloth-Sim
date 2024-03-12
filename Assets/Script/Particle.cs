@@ -11,6 +11,7 @@ public class Particle
     public Vector2 oldPos;
     public Vector2 velocity;
 
+    public float mass = 0.5f;
     public float gravity = -0.24f;
     public float friction = 0.99f;
     public float dampValue = 1f;

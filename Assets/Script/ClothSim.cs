@@ -7,6 +7,12 @@ using static UnityEngine.ParticleSystem;
 public class ClothSim : MonoBehaviour
 {
 
+    // Methods for determining wind should be globbally varying constant function
+    // Do (sin (x*y*t), cos(z*t), sin(cos(5*x*y*z) ) ) For the Wind Vector
+
+    // Uses Verlet Intergration without velocity
+    // Computed by taking the previous positions in account with the current and previous timestep
+
     [SerializeField] public int rows = 48;
     [SerializeField] public int columns = 48;
     [SerializeField] public float spacing = 1.0f;
@@ -23,6 +29,7 @@ public class ClothSim : MonoBehaviour
 
     void Start()
     {
+        // Initializes the Lists
         particleList = new List<Particle>();
         connectorList = new List<Connector>();
         sphereList = new List<GameObject>(); 
@@ -37,6 +44,10 @@ public class ClothSim : MonoBehaviour
     void FixedUpdate()
     {
         SetupLines();
+    }
+    void PhysicsLoop()
+    {
+
     }
 
     void SetupPoints()
