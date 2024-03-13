@@ -16,7 +16,7 @@ public class ClothSim : MonoBehaviour
     [SerializeField] public int rows = 48;
     [SerializeField] public int columns = 48;
     [SerializeField] public float spacing = 1.0f;
-    [SerializeField] public float partcleSize = 0.1f;
+    [SerializeField] public float particleSize = 0.1f;
 
     
     private List<Particle> particleList;
@@ -24,6 +24,7 @@ public class ClothSim : MonoBehaviour
     private List<GameObject> sphereList;
 
     public Material material;
+    public Material connectorMaterial;
 
     Vector2 particleSpawnPosition;
 
@@ -32,12 +33,11 @@ public class ClothSim : MonoBehaviour
         // Initializes the Lists
         particleList = new List<Particle>();
         connectorList = new List<Connector>();
-        sphereList = new List<GameObject>(); 
-        
+        sphereList = new List<GameObject>();
+
         particleSpawnPosition = new Vector2(0, 0);
 
         SetupPoints();
-
 
     }
     // Update is called once per frame
@@ -50,36 +50,36 @@ public class ClothSim : MonoBehaviour
 
     }
 
+
     void SetupPoints()
     {
-        for (int y=0; y <= rows; y++) {
-            for (int x=0; x <= columns; x++) {
+        for (int y = 0; y <= rows; y++)
+        {
+            for (int x = 0; x <= columns; x++)
+            {
                 // Creates the Partcles that will be added to the list
                 Particle particle = new Particle();
-                particle.pinPos= new Vector2(particleSpawnPosition.x, particleSpawnPosition.y);
-                
+                particle.pinPos = new Vector2(particleSpawnPosition.x, particleSpawnPosition.y);
+
                 // Creates the sphere representation
                 GameObject go = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-                
+
 
                 go.transform.position = new Vector2(particleSpawnPosition.x, particleSpawnPosition.y);
-                go.transform.localScale = new Vector2(partcleSize, partcleSize);
-                
+                go.transform.localScale = new Vector2(particleSize, particleSize);
+
                 var mat = go.GetComponent<Renderer>();
                 mat.material = material;
 
 
-                // Pins the particle if its in the top row of the grid.
-                if (x == 0)
-                {
-                    particle.isPinned = true;
-                }
+
 
                 // Sets up X Connectors
                 if (x != 0)
                 {
+                                  
                     LineRenderer line= new GameObject("Line").AddComponent<LineRenderer>();
-                    
+
                     // Creates the connector that will link the particles
                     Connector connector = new Connector();
                     connector.particleOne = go;
@@ -94,8 +94,31 @@ public class ClothSim : MonoBehaviour
                     connectorList.Add(connector);
 
                     connector.lineRender = line;
-                    connector.lineRender.material = material;
-                
+                    connector.lineRender.material = connectorMaterial;
+                    
+                    if (y != 0)
+                    {
+                        /*LineRenderer diagLine = new GameObject("Line").AddComponent<LineRenderer>();
+
+                        // Creates the connector that will link the particles
+                        Connector diagConnector = new Connector();
+                        diagConnector.particleOne = go;
+                        diagConnector.particleTwo = sphereList[(y - 1) * (rows + 1) + (x - 1)];
+
+                        diagConnector.pointOne = particle;
+                        diagConnector.pointTwo = particleList[(y - 1) * (rows + 1) + (x - 1)];
+                        
+                        diagConnector.pointOne.position = go.transform.position;
+                        diagConnector.pointTwo.oldPos = go.transform.position;
+
+
+                        connectorList.Add(diagConnector);
+
+                        diagConnector.lineRender = line;
+                        diagConnector.lineRender.material = connectorMaterial;*/
+
+                        CreateDiagConnector(go, sphereList[(y - 1) * (rows + 1) + (x - 1)], particle, particleList[(y - 1) * (rows + 1) + (x - 1)]);
+                    }
 
                 }
 
@@ -114,12 +137,23 @@ public class ClothSim : MonoBehaviour
 
                     connector.pointOne.position = go.transform.position;
                     connector.pointTwo.oldPos = go.transform.position;
-                    
+
 
                     connectorList.Add(connector);
-                    
+
                     connector.lineRender = line;
-                    connector.lineRender.material = material;
+                    connector.lineRender.material = connectorMaterial;
+
+                    if (x != 0)
+                    {
+                        // Top-right diagonal connector
+                        CreateDiagConnector(go, sphereList[(y - 1) * (rows + 1) + (x + 1)], particle, particleList[(y - 1) * (rows + 1) + (x + 1)]);
+                    }
+                    if (x != columns)
+                    {
+                        // Top-left diagonal connector
+                        CreateDiagConnector(go, sphereList[(y - 1) * (rows + 1) + (x + 1)], particle, particleList[(y - 1) * (rows + 1) + (x + 1)]);
+                    }
                 }
 
                 particleSpawnPosition.x -= spacing;
@@ -128,9 +162,30 @@ public class ClothSim : MonoBehaviour
                 particleList.Add(particle);
                 
             }
-            particleSpawnPosition.x = 0;
-            particleSpawnPosition.y -=spacing;
+                particleSpawnPosition.x = 0;
+                particleSpawnPosition.y -= spacing;
+
         }
+    }
+    
+    void CreateDiagConnector(GameObject gameObjOne, GameObject gameObjTwo, Particle particleOne, Particle particleTwo)
+    {
+        LineRenderer line = new GameObject("Line").AddComponent<LineRenderer>();
+
+        Connector connector = new Connector();
+        connector.particleOne = gameObjOne;
+        connector.particleTwo = gameObjTwo;
+       
+        connector.pointOne = particleOne;
+        connector.pointTwo = particleTwo;
+        
+        connector.pointOne.position = gameObjOne.transform.position;
+        connector.pointTwo.oldPos = gameObjTwo.transform.position;
+        
+        connectorList.Add(connector);
+
+        connector.lineRender = line;
+        connector.lineRender.material = connectorMaterial;
     }
 
 
@@ -158,8 +213,8 @@ public class ClothSim : MonoBehaviour
                     connectorList[i].changeDir = (connectorList[i].pointTwo.position - connectorList[i].pointOne.position).normalized;
                 }
                 Vector2 changeAmount = connectorList[i].changeDir * errorMargin;
-                connectorList[i].pointOne.position -= changeAmount * 0.5f;
-                connectorList[i].pointTwo.position += changeAmount * 0.5f;
+                //connectorList[i].pointOne.position -= changeAmount * 0.5f;
+                //connectorList[i].pointTwo.position += changeAmount * 0.5f;
             }
         }
 
@@ -167,7 +222,7 @@ public class ClothSim : MonoBehaviour
         {
             Particle point = particleList[p];
             sphereList[p].transform.position = new Vector2(point.position.x, point.position.y);
-            sphereList[p].transform.localScale = new Vector3(partcleSize, partcleSize, partcleSize);
+            sphereList[p].transform.localScale = new Vector3(particleSize, particleSize, particleSize);
         }
 
         foreach(Connector c in connectorList){
