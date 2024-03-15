@@ -13,4 +13,5 @@ public class Connector
     public Particle pointOne;
     public Particle pointTwo;
     public Vector2 changeDir;
+    public float restLength;
 }

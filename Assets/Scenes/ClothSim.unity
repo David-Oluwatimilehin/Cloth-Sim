@@ -250,6 +250,8 @@ MonoBehaviour:
   columns: 20
   spacing: 0.5
   particleSize: 0.1
+  stiffness: 0.05
+  damping: 0.03
   t: {fileID: 1365332114}
   material: {fileID: 2100000, guid: 3d089b639de132d4f93eeb03ed61db45, type: 2}
   connectorMaterial: {fileID: 2100000, guid: 644317fa152c685479a50dc43adf111c, type: 2}
