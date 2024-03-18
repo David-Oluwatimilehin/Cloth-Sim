@@ -48,16 +48,24 @@ public class ClothSim : MonoBehaviour
     // Update is called once per frame
     void FixedUpdate()
     {
-        //UpdateVerletBody();//PhysicsLoop();
+        //SetupLines();
         
-        SetupLines();
+        
+        DrawConnectorsAndPoints();
+    }
 
+    void PhysicsLoop()
+    {
+        for(int p=0; p<particleList.Count; p++)
+        {
+
+        }
     }
 
     void UpdateVerletBody()
     {
         //var startDist = 0.5f;
-        
+
 
         foreach (var particle in particleList)
         {
@@ -102,49 +110,13 @@ public class ClothSim : MonoBehaviour
     }
 
 
-
-    void PhysicsLoop()
+    void SetupPoints()
     {
 
-        foreach (var particle in particleList)
+        for (int y = 0; y <= rows; y++)
         {
-            if (particle.isPinned)
+            for (int x = 0; x <= columns; x++)
             {
-                particle.position = particle.pinPos;
-                particle.oldPos = particle.pinPos;
-            }
-            else
-            {
-                Vector3 newPos = particle.position + particle.velocity * Time.fixedDeltaTime +
-                    particle.acc * (Time.fixedDeltaTime * Time.fixedDeltaTime * 0.5f);
-                Vector3 newAcc = new Vector3(0.0f, 0.0f);
-
-                Vector3 newVel = (Vector3)particle.velocity + ((Vector3)particle.acc + newAcc) *
-                    (Time.fixedDeltaTime * 0.5f);
-                particle.position = newPos;
-                particle.velocity = newVel;
-                particle.acc = newAcc;
-
-            }
-
-        }
-    }
-
-        Vector3 ApplyForces()
-        {
-
-
-
-            return Vector3.zero;
-        }
-
-
-        void SetupPoints()
-        {
-            for (int y = 0; y <= rows; y++)
-            {
-                for (int x = 0; x <= columns; x++)
-                {
                     // Creates the Partcles that will be added to the list
                     Particle particle = new Particle();
                     particle.pinPos = new Vector2(particleSpawnPosition.x, particleSpawnPosition.y);
@@ -190,26 +162,26 @@ public class ClothSim : MonoBehaviour
 
                         if (y != 0)
                         {
-                        /*LineRenderer diagLine = new GameObject("Line").AddComponent<LineRenderer>();
+                            /*LineRenderer diagLine = new GameObject("Line").AddComponent<LineRenderer>();
 
-                        // Creates the connector that will link the particles
-                        Connector diagConnector = new Connector();
-                        diagConnector.particleOne = go;
-                        diagConnector.particleTwo = sphereList[(y - 1) * (rows + 1) + (x - 1)];
+                            // Creates the connector that will link the particles
+                            Connector diagConnector = new Connector();
+                            diagConnector.particleOne = go;
+                            diagConnector.particleTwo = sphereList[(y - 1) * (rows + 1) + (x - 1)];
 
-                        diagConnector.pointOne = particle;
-                        diagConnector.pointTwo = particleList[(y - 1) * (rows + 1) + (x - 1)];
+                            diagConnector.pointOne = particle;
+                            diagConnector.pointTwo = particleList[(y - 1) * (rows + 1) + (x - 1)];
 
-                        diagConnector.pointOne.position = go.transform.position;
-                        diagConnector.pointTwo.oldPos = go.transform.position;
+                            diagConnector.pointOne.position = go.transform.position;
+                            diagConnector.pointTwo.oldPos = go.transform.position;
 
 
-                        connectorList.Add(diagConnector);
+                            connectorList.Add(diagConnector);
 
-                        diagConnector.lineRender = line;
-                        diagConnector.lineRender.material = connectorMaterial;*/
+                            diagConnector.lineRender = line;
+                            diagConnector.lineRender.material = connectorMaterial;*/
 
-                        CreateDiagConnector(go, sphereList[(y - 1) * (rows + 1) + (x - 1)], particle, particleList[(y - 1) * (rows + 1) + (x - 1)], Mathf.Sqrt(2) * spacing);
+                            CreateDiagConnector(go, sphereList[(y - 1) * (rows + 1) + (x - 1)], particle, particleList[(y - 1) * (rows + 1) + (x - 1)], Mathf.Sqrt(2) * spacing);
                         }
 
                     }
@@ -254,14 +226,49 @@ public class ClothSim : MonoBehaviour
                     sphereList.Add(go);
                     particleList.Add(particle);
 
-                }
-                particleSpawnPosition.x = 0;
-                particleSpawnPosition.y -= spacing;
-
             }
+            particleSpawnPosition.x = 0;
+            particleSpawnPosition.y -= spacing;
+
+        }
+    }
+
+
+    private void DrawConnectorsAndPoints()
+    {
+        // Update positions and scale of particles
+        for (int p = 0; p < particleList.Count; p++)
+        {
+            Particle point = particleList[p];
+            sphereList[p].transform.position = new Vector2(point.position.x, point.position.y);
+            sphereList[p].transform.localScale = new Vector3(particleSize, particleSize, particleSize);
         }
 
-        void CreateDiagConnector(GameObject gameObjOne, GameObject gameObjTwo, Particle particleOne, Particle particleTwo, float length)
+        foreach (Connector c in connectorList)
+        {
+            if (!c.isEnabled)
+            {
+                Destroy(c.lineRender);
+
+            }
+            else
+            {
+                var points = new Vector3[2];
+                points[0] = c.particleOne.transform.position + new Vector3(0, 0, 0);
+                points[1] = c.particleTwo.transform.position + new Vector3(0, 0, 0);
+
+                c.lineRender.startWidth = 0.04f;
+                c.lineRender.startColor = Color.yellow;
+
+                c.lineRender.endWidth = 0.04f;
+                c.lineRender.endColor = Color.blue;
+                c.lineRender.SetPositions(points);
+            }
+        }
+        
+    }
+
+    void CreateDiagConnector(GameObject gameObjOne, GameObject gameObjTwo, Particle particleOne, Particle particleTwo, float length)
         {
             LineRenderer line = new GameObject("Line").AddComponent<LineRenderer>();
             line.transform.SetParent(t, false);
@@ -285,7 +292,8 @@ public class ClothSim : MonoBehaviour
         }
 
 
-         void SetupLines(){
+    void SetupLines()
+    {
 
             var startDist = 0.5f;
 
@@ -298,14 +306,14 @@ public class ClothSim : MonoBehaviour
                 if (connector.isEnabled)
                 {
                     // Calculate distance between particles
-                    float dist = (connector.pointOne.position - connector.pointTwo.position).magnitude;
+                    float dist = (connector.pointTwo.position-connector.pointOne.position).magnitude;
                     float errorMargin = Mathf.Abs(dist - startDist);
 
                     // Determine direction of change
                     Vector2 changeDir;
                     if (dist > startDist)
                     {
-                        changeDir = (connector.pointOne.position - connector.pointTwo.position).normalized;
+                        changeDir = (connector.pointTwo.position - connector.pointOne.position).normalized;
                     }
                     else
                     {
@@ -316,8 +324,8 @@ public class ClothSim : MonoBehaviour
                     Vector2 changeAmount = changeDir * errorMargin;
 
                     // Update positions of connected particles
-                    connector.pointOne.position -= changeAmount * 0.5f;
-                    connector.pointTwo.position += changeAmount * 0.5f;
+                    connector.pointOne.position+= changeAmount * 0.5f;
+                    connector.pointTwo.position = changeAmount * 0.5f;
 
                     // Update line renderer positions
                     var points = new Vector3[2];
@@ -345,7 +353,7 @@ public class ClothSim : MonoBehaviour
                 sphereList[p].transform.position = new Vector2(point.position.x, point.position.y);
                 sphereList[p].transform.localScale = new Vector3(particleSize, particleSize, particleSize);
             }
-        }
+    }
 
         /*var startDist = 0.5f;
 
