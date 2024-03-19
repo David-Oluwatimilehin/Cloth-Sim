@@ -18,8 +18,10 @@ public class ClothSim : MonoBehaviour
     [SerializeField] public int columns = 48;
     [SerializeField] public float spacing = 1.0f;
     [SerializeField] public float particleSize = 0.1f;
-    [SerializeField] public float stiffness = 1f; // Adjust as needed
-    [SerializeField] public float damping = 0.5f; // Adjust as needed
+    [SerializeField] public float stiffness = 1f; 
+    [SerializeField] public float damping = 0.5f; 
+    [SerializeField] public float springConstant = 2f;
+
 
 
     private List<Particle> particleList;
@@ -58,8 +60,31 @@ public class ClothSim : MonoBehaviour
     {
         for(int p=0; p<particleList.Count; p++)
         {
+            if (!particleList[p].isPinned)
+            {
+                //particleList[p].oldPos;
+                particleList[p].acc = DetermineAcceleration(particleList[p]);
+
+
+            }
+
 
         }
+    }
+    Vector2 DetermineAcceleration(Particle particle)
+    {
+        
+        
+        //particle.mass;
+
+
+
+        return Vector2.down;
+    }
+
+    Vector2 HookesLawImplementation(Particle pointOne, Particle pointTwo)
+    {
+        return Vector2.zero;
     }
 
     void UpdateVerletBody()
@@ -132,9 +157,6 @@ public class ClothSim : MonoBehaviour
                     var mat = go.GetComponent<Renderer>();
                     mat.material = material;
 
-
-
-
                     // Sets up X Connectors
                     if (x != 0)
                     {
@@ -161,26 +183,7 @@ public class ClothSim : MonoBehaviour
                         connector.lineRender.material = connectorMaterial;
 
                         if (y != 0)
-                        {
-                            /*LineRenderer diagLine = new GameObject("Line").AddComponent<LineRenderer>();
-
-                            // Creates the connector that will link the particles
-                            Connector diagConnector = new Connector();
-                            diagConnector.particleOne = go;
-                            diagConnector.particleTwo = sphereList[(y - 1) * (rows + 1) + (x - 1)];
-
-                            diagConnector.pointOne = particle;
-                            diagConnector.pointTwo = particleList[(y - 1) * (rows + 1) + (x - 1)];
-
-                            diagConnector.pointOne.position = go.transform.position;
-                            diagConnector.pointTwo.oldPos = go.transform.position;
-
-
-                            connectorList.Add(diagConnector);
-
-                            diagConnector.lineRender = line;
-                            diagConnector.lineRender.material = connectorMaterial;*/
-
+                        { 
                             CreateDiagConnector(go, sphereList[(y - 1) * (rows + 1) + (x - 1)], particle, particleList[(y - 1) * (rows + 1) + (x - 1)], Mathf.Sqrt(2) * spacing);
                         }
 
@@ -211,12 +214,12 @@ public class ClothSim : MonoBehaviour
 
                         if (x != 0)
                         {
-                            // Top-right diagonal connector
+                            // Top-right diagonal connectors
                             CreateDiagConnector(go, sphereList[(y - 1) * (rows + 1) + (x + 1)], particle, particleList[(y - 1) * (rows + 1) + (x + 1)], Mathf.Sqrt(2) * spacing);
                         }
                         if (x != columns)
                         {
-                            // Top-left diagonal connector
+                            // Top-left diagonal connectors
                             CreateDiagConnector(go, sphereList[(y - 1) * (rows + 1) + (x + 1)], particle, particleList[(y - 1) * (rows + 1) + (x + 1)],Mathf.Sqrt(2) * spacing);
                         }
                     }

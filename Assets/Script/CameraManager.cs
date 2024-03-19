@@ -15,7 +15,8 @@ public class CameraManager : MonoBehaviour
     {
         
         inputDir = new Vector3(0, 0, 0);
-        if (Input.GetKey(KeyCode.W)) inputDir.z = 1f;
+
+        if (Input.GetKey(KeyCode.W)) inputDir.y = 1f;
         if (Input.GetKey(KeyCode.A)) inputDir.x = -1f;
         if (Input.GetKey(KeyCode.S)) inputDir.z = -1f;
         if (Input.GetKey(KeyCode.D)) inputDir.x = 1f;
