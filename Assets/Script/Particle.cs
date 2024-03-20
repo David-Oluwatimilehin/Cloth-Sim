@@ -16,5 +16,5 @@ public class Particle
 
     public float friction = 0.60f;
     public float gravity = -0.55f;
-    public float dampValue = 0.2f;
+    public float dampValue = 1f;
 }

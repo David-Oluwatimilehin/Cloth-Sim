@@ -19,8 +19,8 @@ public class ClothSim : MonoBehaviour
     [SerializeField] public int columns = 48;
     [SerializeField] public float spacing = 1.0f;
     [SerializeField] public float particleSize = 0.1f;
-    public float stiffness = 1f; 
-    public float springConstant = 2f;
+    float stiffness = 1f; 
+    //float springConstant = 2f;
 
 
 
@@ -156,7 +156,7 @@ public class ClothSim : MonoBehaviour
         {
             Particle point = particleList[p];
             sphereList[p].transform.position = new Vector2(point.position.x, point.position.y);
-            sphereList[p].transform.localScale = new Vector3(particleSize, particleSize, 1);
+            sphereList[p].transform.localScale = new Vector3(particleSize, particleSize, particleSize);
         }
 
         for (int i=0; i < connectorList.Count; i++)
@@ -168,8 +168,8 @@ public class ClothSim : MonoBehaviour
             else
             {
                 var points = new Vector3[2];
-                points[0] = connectorList[i].particleOne.transform.position + new Vector3(0, 0, 1);
-                points[1] = connectorList[i].particleTwo.transform.position + new Vector3(0, 0, 1);
+                points[0] = connectorList[i].particleOne.transform.position + new Vector3(0, 0, 0);
+                points[1] = connectorList[i].particleTwo.transform.position + new Vector3(0, 0, 0);
 
                 connectorList[i].lineRender.startWidth = 0.04f;
                 connectorList[i].lineRender.endWidth = 0.04f;
