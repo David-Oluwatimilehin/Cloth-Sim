@@ -73,18 +73,18 @@ public class ClothSim : MonoBehaviour
         }
         return avgVel;
     }
-    private void Update()
+    void Update()
     {
         Vector3 mousePos= Input.mousePosition;
-        Vector3 mousePos_new = Camera.main.ScreenToViewportPoint(mousePos);
+        Vector3 mousePos_new = Camera.main.ScreenToWorldPoint(mousePos);
 
 
         if(Input.GetMouseButton(0))
         {
             for(int i=0; i<connectorList.Count; i++)
             {
-                float dist = Vector3.Distance(mousePos_new, connectorList[i].pointOne.position);
-                if(dist<= 1.45f)
+                float dist = Vector3.Distance(mousePos_new, connectorList[i].particleOne.transform.position);
+                if(dist <= 1.05f)
                 {
                     connectorList[i].isEnabled = false;
                 }
@@ -95,7 +95,7 @@ public class ClothSim : MonoBehaviour
         {
             float dist = Vector3.Distance(connectorList[i].pointOne.position, connectorList[i].pointTwo.position);
             
-            if(dist > spacing * 2)
+            if(dist > 1.4f)
             {
                 connectorList[i].isEnabled = false;
             }
@@ -156,7 +156,7 @@ public class ClothSim : MonoBehaviour
         {
             Particle point = particleList[p];
             sphereList[p].transform.position = new Vector2(point.position.x, point.position.y);
-            sphereList[p].transform.localScale = new Vector3(particleSize, particleSize, particleSize);
+            sphereList[p].transform.localScale = new Vector3(particleSize, particleSize, 1);
         }
 
         for (int i=0; i < connectorList.Count; i++)
@@ -168,8 +168,8 @@ public class ClothSim : MonoBehaviour
             else
             {
                 var points = new Vector3[2];
-                points[0] = connectorList[i].particleOne.transform.position + new Vector3(0, 0, 0);
-                points[1] = connectorList[i].particleTwo.transform.position + new Vector3(0, 0, 0);
+                points[0] = connectorList[i].particleOne.transform.position + new Vector3(0, 0, 1);
+                points[1] = connectorList[i].particleTwo.transform.position + new Vector3(0, 0, 1);
 
                 connectorList[i].lineRender.startWidth = 0.04f;
                 connectorList[i].lineRender.endWidth = 0.04f;
