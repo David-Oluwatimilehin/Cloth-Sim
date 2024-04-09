@@ -5,11 +5,7 @@ using UnityEngine;
 public class Connector
 {
     public bool isEnabled = true;
-
-    public LineRenderer lineRender;
-    public GameObject particleOne;
-    public GameObject particleTwo;
-    
+    public LineRenderer lineRender;    
     public Particle pointOne;
     public Particle pointTwo;
     public Vector2 changeDir;
