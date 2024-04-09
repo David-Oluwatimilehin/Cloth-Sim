@@ -19,11 +19,12 @@ public class ClothSim : MonoBehaviour
     [SerializeField] public int rows = 48;
     [SerializeField] public int columns = 48;
     [SerializeField] public float spacing = 1.0f;
-    [SerializeField] public float particleSize;
+    
     float stiffness = 1f;
 
 
     [Header("Wind Attributes")]
+    [SerializeField] public bool simulateWind;
     [SerializeField] public float airDensity;
     [SerializeField] public float windSpeed;
     [SerializeField] public float dragCooeficient;
@@ -34,11 +35,11 @@ public class ClothSim : MonoBehaviour
     private List<Particle> particleList;
     private List<Connector> connectorList;
     private List<GameObject> sphereList;
-
+    [Header("Particle Attributes")]
     public Transform t;
-
-    public Material material;
+    public Material particleMaterial;
     public Material connectorMaterial;
+    [SerializeField] public float particleSize;
 
     Vector2 particleSpawnPosition;
 
@@ -63,23 +64,21 @@ public class ClothSim : MonoBehaviour
     float ApplyWind()
     {
         Vector2 wind = Vector2.zero;
+        if (simulateWind)
+        {
+            wind.x = 0.5f * airDensity * windSpeed * windSpeed *
+                (3.14159f * particleSize / 2 * particleSize / 2) * dragCooeficient;
+        }
 
-        wind.x = 0.5f * airDensity * windSpeed * windSpeed *
-            (3.14159f * particleSize / 2 * particleSize / 2) * dragCooeficient;
-        
         return wind.x;
     }
 
-    Vector2 GetAvgVel()
+    float SinWindFunc(Particle p)
     {
-        Vector2 avgVel=Vector2.zero;
-        for(int i = 0; i < particleList.Count; i++)
-        {
-            avgVel += particleList[i].velocity;
-            avgVel /= particleList.Count;
-        }
-        return avgVel;
+
+        return Mathf.Sin(p.position.x * p.position.y);
     }
+    
     void Update()
     {
         //Vector3 mousePos= Input.mousePosition;
@@ -129,6 +128,7 @@ public class ClothSim : MonoBehaviour
                 
                 particleList[p].position += particleList[p].velocity * particleList[p].dampValue;
                 particleList[p].position.x += ApplyWind() * Time.fixedDeltaTime;
+                //particleList[p].position.x += SinWindFunc(particleList[p]) * Time.fixedDeltaTime;
                 particleList[p].position.y += particleList[p].gravity * Time.fixedDeltaTime;
             }
         }
@@ -270,7 +270,7 @@ public class ClothSim : MonoBehaviour
                     go.transform.localScale = new Vector2(particleSize, particleSize);
 
                     var mat = go.GetComponent<Renderer>();
-                    mat.material = material;
+                    mat.material = particleMaterial;
 
                     // Sets up X Connectors
                     if (x != 0)
@@ -415,123 +415,5 @@ public class ClothSim : MonoBehaviour
             connector.lineRender.material = connectorMaterial;
         }
 
-
-    void SetupLines()
-    {
-
-            var startDist = 0.5f;
-
-            // Loop through all connectors
-            for (int i = 0; i < connectorList.Count; i++)
-            {
-                Connector connector = connectorList[i];
-
-                // Check if the connector is enabled
-                if (connector.isEnabled)
-                {
-                    // Calculate distance between particles
-                    float dist = (connector.pointTwo.position-connector.pointOne.position).magnitude;
-                    float errorMargin = Mathf.Abs(dist - startDist);
-
-                    // Determine direction of change
-                    Vector2 changeDir;
-                    if (dist > startDist)
-                    {
-                        changeDir = (connector.pointTwo.position - connector.pointOne.position).normalized;
-                    }
-                    else
-                    {
-                        changeDir = (connector.pointTwo.position - connector.pointOne.position).normalized;
-                    }
-
-                    // Calculate change amount
-                    Vector2 changeAmount = changeDir * errorMargin;
-
-                    // Update positions of connected particles
-                    connector.pointOne.position+= changeAmount * 0.5f;
-                    connector.pointTwo.position = changeAmount * 0.5f;
-
-                    // Update line renderer positions
-                    var points = new Vector3[2];
-                    //points[0] = connector.particleOne.transform.position;
-                    //points[1] = connector.particleTwo.transform.position;
-
-                    connector.lineRender.startWidth = 0.05f;
-                    connector.lineRender.startColor = Color.yellow;
-
-                    connector.lineRender.endWidth = 0.05f;
-                    connector.lineRender.endColor = Color.blue;
-                    connector.lineRender.SetPositions(points);
-                }
-                else
-                {
-                    // If the connector is not enabled, destroy its line renderer
-                    Destroy(connector.lineRender);
-                }
-            }
-
-            // Update positions and scale of particles
-            for (int p = 0; p < particleList.Count; p++)
-            {
-                Particle point = particleList[p];
-                sphereList[p].transform.position = new Vector2(point.position.x, point.position.y);
-                sphereList[p].transform.localScale = new Vector3(particleSize, particleSize, particleSize);
-            }
-    }
-
-        /*var startDist = 0.5f;
-
-        for (int i = 0; i < connectorList.Count; i++)
-        {
-            if (!connectorList[i].isEnabled)
-            {
-                // Do Absolutely Nothing
-            }
-            else
-            {
-                float dist = (connectorList[i].pointOne.position - connectorList[i].pointTwo.position).magnitude;
-                float errorMargin = Mathf.Abs(dist - startDist);
-
-                if (dist > startDist)
-                {
-                    connectorList[i].changeDir = (connectorList[i].pointOne.position - connectorList[i].pointTwo.position).normalized;
-                }
-                else if (startDist < dist)
-                {
-                    connectorList[i].changeDir = (connectorList[i].pointTwo.position - connectorList[i].pointOne.position).normalized;
-                }
-                Vector2 changeAmount = connectorList[i].changeDir * errorMargin;
-                connectorList[i].pointOne.position -= changeAmount * 0.5f;
-                connectorList[i].pointTwo.position += changeAmount * 0.5f;
-            }
-        }
-
-        for (int p=0; p<particleList.Count;p++)
-        {
-            Particle point = particleList[p];
-            sphereList[p].transform.position = new Vector2(point.position.x, point.position.y);
-            sphereList[p].transform.localScale = new Vector3(particleSize, particleSize, particleSize);
-        }
-
-        foreach(Connector c in connectorList){
-            if (!c.isEnabled)
-            {
-                Destroy(c.lineRender);
-
-            }
-            else
-            {
-                var points = new Vector3[2];
-                points[0] = c.particleOne.transform.position + new Vector3(0, 0, 0);
-                points[1] = c.particleTwo.transform.position + new Vector3(0, 0, 0);
-
-                c.lineRender.startWidth = 0.04f;
-                c.lineRender.startColor = Color.yellow;
-
-                c.lineRender.endWidth = 0.04f;
-                c.lineRender.endColor = Color.blue;
-                c.lineRender.SetPositions(points);
-            }
-        }*/
 }
 
