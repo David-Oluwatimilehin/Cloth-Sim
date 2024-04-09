@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using UnityEditor;
 using UnityEngine;
 using UnityEngine.UIElements;
 using static UnityEngine.ParticleSystem;
@@ -14,12 +15,18 @@ public class ClothSim : MonoBehaviour
 
     // Uses Verlet Intergration without velocity
     // Computed by taking the previous positions in account with the current and previous timestep
-
+    [Header("Cloth Attributes")]
     [SerializeField] public int rows = 48;
     [SerializeField] public int columns = 48;
     [SerializeField] public float spacing = 1.0f;
-    [SerializeField] public float particleSize = 0.1f;
-    float stiffness = 1f; 
+    [SerializeField] public float particleSize;
+    float stiffness = 1f;
+
+
+    [Header("Wind Attributes")]
+    [SerializeField] public float airDensity;
+    [SerializeField] public float windSpeed;
+    [SerializeField] public float dragCooeficient;
     //float springConstant = 2f;
 
 
@@ -53,14 +60,14 @@ public class ClothSim : MonoBehaviour
         PhysicsLoop();
     }
 
-    Vector2 ApplyWind()
+    float ApplyWind()
     {
-        Vector2 wind = new Vector2(0, 0);
+        Vector2 wind = Vector2.zero;
 
-        wind.x = Mathf.Sin(GetAvgVel().x * Time.deltaTime);
-        wind.y = Mathf.Cos(GetAvgVel().y * Time.deltaTime);
+        wind.x = 0.5f * airDensity * windSpeed * windSpeed *
+            (3.14159f * particleSize / 2 * particleSize / 2) * dragCooeficient;
         
-        return wind;
+        return wind.x;
     }
 
     Vector2 GetAvgVel()
@@ -75,32 +82,32 @@ public class ClothSim : MonoBehaviour
     }
     void Update()
     {
-        Vector3 mousePos= Input.mousePosition;
-        Vector3 mousePos_new = Camera.main.ScreenToWorldPoint(mousePos);
+        //Vector3 mousePos= Input.mousePosition;
+        //Vector3 mousePos_new = Camera.main.ScreenToWorldPoint(mousePos);
 
 
-        if(Input.GetMouseButton(0))
-        {
-            for(int i=0; i<connectorList.Count; i++)
-            {
-                float dist = Vector3.Distance(mousePos_new, connectorList[i].particleOne.transform.position);
-                if(dist <= 1.05f)
-                {
-                    connectorList[i].isEnabled = false;
-                }
-            }
-        }
+        //if(Input.GetMouseButton(0))
+        //{
+        //    for(int i=0; i<connectorList.Count; i++)
+        //    {
+        //        float dist = Vector3.Distance(mousePos_new, connectorList[i].particleOne.transform.position);
+        //        if(dist <= 1.05f)
+        //        {
+        //            connectorList[i].isEnabled = false;
+        //        }
+        //    }
+        //}
 
-        for (int i=0; i<connectorList.Count; i++)
-        {
-            float dist = Vector3.Distance(connectorList[i].pointOne.position, connectorList[i].pointTwo.position);
+        //for (int i=0; i<connectorList.Count; i++)
+        //{
+        //    float dist = Vector3.Distance(connectorList[i].pointOne.position, connectorList[i].pointTwo.position);
             
-            if(dist > 1.4f)
-            {
-                connectorList[i].isEnabled = false;
-            }
+        //    if(dist > 1.4f)
+        //    {
+        //        connectorList[i].isEnabled = false;
+        //    }
 
-        }
+        //}
         
     }
 
@@ -108,19 +115,21 @@ public class ClothSim : MonoBehaviour
     {
         for(int p=0; p<particleList.Count; p++)
         {
-            Particle point= particleList[p];
-            if (point.isPinned==true)
+            
+            if (particleList[p].isPinned==true)
             {
-                point.position = point.pinPos;
-                point.oldPos = point.pinPos;
+                particleList[p].position = particleList[p].pinPos;
+                particleList[p].oldPos = particleList[p].pinPos;
             }
             else
             {        
-                point.velocity = (point.position - point.oldPos) * point.friction;
-                point.oldPos = point.position;
+                particleList[p].velocity = (particleList[p].position - particleList[p].oldPos) * particleList[p].friction;
+                particleList[p].oldPos = particleList[p].position;
 
-                point.position += point.velocity * point.dampValue;
-                point.position.y += point.gravity * Time.fixedDeltaTime;
+                
+                particleList[p].position += particleList[p].velocity * particleList[p].dampValue;
+                particleList[p].position.x += ApplyWind() * Time.fixedDeltaTime;
+                particleList[p].position.y += particleList[p].gravity * Time.fixedDeltaTime;
             }
         }
 
@@ -154,8 +163,8 @@ public class ClothSim : MonoBehaviour
 
         for (int p = 0; p < particleList.Count; p++)
         {
-            Particle point = particleList[p];
-            sphereList[p].transform.position = new Vector2(point.position.x, point.position.y);
+            
+            sphereList[p].transform.position = new Vector2(particleList[p].position.x, particleList[p].position.y);
             sphereList[p].transform.localScale = new Vector3(particleSize, particleSize, particleSize);
         }
 
@@ -168,8 +177,8 @@ public class ClothSim : MonoBehaviour
             else
             {
                 var points = new Vector3[2];
-                points[0] = connectorList[i].particleOne.transform.position + new Vector3(0, 0, 0);
-                points[1] = connectorList[i].particleTwo.transform.position + new Vector3(0, 0, 0);
+                points[0] = connectorList[i].pointOne.position;
+                points[1] = connectorList[i].pointTwo.position;
 
                 connectorList[i].lineRender.startWidth = 0.04f;
                 connectorList[i].lineRender.endWidth = 0.04f;
@@ -272,8 +281,8 @@ public class ClothSim : MonoBehaviour
                         //line.transform.SetParent(t, false);
 
                         Connector connector = new Connector();
-                        connector.particleOne = go;
-                        connector.particleTwo = sphereList[sphereList.Count - 1];
+                        //connector.particleOne = go;
+                        //connector.particleTwo = sphereList[sphereList.Count - 1];
 
                         connector.pointOne = particle;
                         connector.pointTwo = particleList[particleList.Count - 1];
@@ -303,8 +312,8 @@ public class ClothSim : MonoBehaviour
                         // Creates the connector that will link the particles
                         
                         Connector connector = new Connector();
-                        connector.particleOne = go;
-                        connector.particleTwo = sphereList[(y - 1) * (rows + 1) + x];
+                        //connector.particleOne = go;
+                        //connector.particleTwo = sphereList[(y - 1) * (rows + 1) + x];
 
                         connector.pointOne = particle;
                         connector.pointTwo = particleList[(y - 1) * (rows + 1) + x];
@@ -355,7 +364,7 @@ public class ClothSim : MonoBehaviour
         for (int p = 0; p < particleList.Count; p++)
         {
             Particle point = particleList[p];
-            sphereList[p].transform.position = new Vector2(point.position.x, point.position.y);
+            sphereList[p].transform.position = new Vector2(point.position.x, particleList[p].position.y);
             sphereList[p].transform.localScale = new Vector3(particleSize, particleSize, particleSize);
         }
 
@@ -369,8 +378,8 @@ public class ClothSim : MonoBehaviour
             else
             {
                 var points = new Vector3[2];
-                points[0] = c.particleOne.transform.position + new Vector3(0, 0, 0);
-                points[1] = c.particleTwo.transform.position + new Vector3(0, 0, 0);
+                //points[0] = c.particleOne.transform.position + new Vector3(0, 0, 0);
+                //points[1] = c.particleTwo.transform.position + new Vector3(0, 0, 0);
 
                 c.lineRender.startWidth = 0.04f;
                 c.lineRender.startColor = Color.yellow;
@@ -391,8 +400,8 @@ public class ClothSim : MonoBehaviour
             //connector.restLength = length;
 
             Connector connector = new Connector();
-            connector.particleOne = gameObjOne;
-            connector.particleTwo = gameObjTwo;
+            //connector.particleOne = gameObjOne;
+            //connector.particleTwo = gameObjTwo;
 
             connector.pointOne = particleOne;
             connector.pointTwo = particleTwo;
@@ -444,8 +453,8 @@ public class ClothSim : MonoBehaviour
 
                     // Update line renderer positions
                     var points = new Vector3[2];
-                    points[0] = connector.particleOne.transform.position;
-                    points[1] = connector.particleTwo.transform.position;
+                    //points[0] = connector.particleOne.transform.position;
+                    //points[1] = connector.particleTwo.transform.position;
 
                     connector.lineRender.startWidth = 0.05f;
                     connector.lineRender.startColor = Color.yellow;
