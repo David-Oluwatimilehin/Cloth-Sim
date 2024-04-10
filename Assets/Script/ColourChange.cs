@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -21,5 +22,10 @@ public class ColourChange : MonoBehaviour
     {
         float t = Mathf.PingPong(Time.time, duration) / duration;
         cam.backgroundColor = Color.Lerp(redColour, blueColour, t);
+    }
+
+    public static implicit operator Color(ColourChange v)
+    {
+        throw new NotImplementedException();
     }
 }
