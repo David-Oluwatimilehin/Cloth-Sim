@@ -9991,9 +9991,15 @@ MonoBehaviour:
   m_GameObject: {fileID: 1139857750}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c0a411e0a683dfa4dba72a0b485ff775, type: 3}
+  m_Script: {fileID: 11500000, guid: 745bc9e016f660b46927bf043025e6af, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  cam: {fileID: 963194227}
+  texture: {fileID: 2800000, guid: 5299cc9a12cb1da4bb6662e677e571eb, type: 3}
+  numberOfParticles: 200
+  blendShapes: []
+  particles: []
+  nrAlive: 0
 --- !u!4 &1139857752
 Transform:
   m_ObjectHideFlags: 0
