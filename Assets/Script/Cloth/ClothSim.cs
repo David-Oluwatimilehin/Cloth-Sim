@@ -11,7 +11,11 @@ public class ClothSim : MonoBehaviour
     // Methods for determining wind should be globbally varying constant function
     // Do (sin (x*y*t), cos(z*t), sin(cos(5*x*y*z) ) ) For the Wind Vector
 
-    // Uses Verlet Intergration without velocity
+    // TODO: Change Mesh to be skinnedMesh attack bpnes for the connectors.
+    // TODO: Figure out how to deform the mesh
+    // TODO: REMOVE the pinned particles so that only the first and last particles of the row are pinned.
+
+    // Uses Verlet Intergration with velocity
     // Computed by taking the previous positions in account with the current and previous timestep
     [Header("Cloth Attributes")]
     [SerializeField] public int rows = 48;
@@ -19,7 +23,7 @@ public class ClothSim : MonoBehaviour
     [SerializeField] public float spacing = 1.0f;
 
     private Mesh clothMesh;
-
+    
 
     Vector2 spawnVec;
 
@@ -53,11 +57,18 @@ public class ClothSim : MonoBehaviour
 
         particleSpawnPosition = new Vector2(0, 0);
         particleColour = new Color(255, 0, 0);
-        
-        GenerateVertices();
+
+        //GenerateVertices();
+        GenerateSkinnedMesh();
         SetupPoints();
         
 
+    }
+    private void GenerateSkinnedMesh()
+    {
+        GetComponent<MeshFilter>().mesh= clothMesh = new Mesh();
+        clothMesh.name = "Skinned Mesh";
+        
     }
 
     private void GenerateVertices()

@@ -9997,8 +9997,11 @@ MonoBehaviour:
   cam: {fileID: 963194227}
   texture: {fileID: 2800000, guid: 5299cc9a12cb1da4bb6662e677e571eb, type: 3}
   numberOfParticles: 200
+  boxExtents: {x: 3, y: 3, z: 3}
+  spawnSphere: {x: 0, y: -1.38}
+  minSpeed: {x: 2.5, y: 5, z: 0.5}
+  maxSpeed: {x: 2.5, y: 5, z: 0.5}
   blendShapes: []
-  particles: []
   nrAlive: 0
 --- !u!4 &1139857752
 Transform:
