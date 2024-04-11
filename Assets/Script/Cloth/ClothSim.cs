@@ -71,7 +71,7 @@ public class ClothSim : MonoBehaviour
         {
             for (int x = 0; x <= rows; x++, i++)
             {
-                clothVertices[i] = new Vector3(x, y);
+                clothVertices[i] = new Vector3(-x, -y);
             }
         }
         clothMesh.vertices = clothVertices;
