@@ -1,4 +1,4 @@
-using System;
+
 using System.Collections;
 using System.Collections.Generic;
 
@@ -59,7 +59,7 @@ public class ClothSim : MonoBehaviour
         particleColour = new Color(255, 0, 0);
 
         //GenerateVertices();
-        GenerateSkinnedMesh();
+        //GenerateSkinnedMesh();
         SetupPoints();
         
 
@@ -118,7 +118,7 @@ public class ClothSim : MonoBehaviour
                 (3.14159f * particleSize / 2 * particleSize / 2) * dragCooeficient;
         }
 
-        return wind.x;
+        return wind.x * Random.Range(1.5F, 2.3F);
     }
     void SetupPoints()
     {
@@ -130,7 +130,7 @@ public class ClothSim : MonoBehaviour
                     // Creates the Partcles that will be added to the list
                     Particle particle = new Particle();
                     particle.pinPos = new Vector2( particleSpawnPosition.y,particleSpawnPosition.x);
-
+                    
 
                     spawnVec = new Vector2(particleSpawnPosition.y, particleSpawnPosition.x);
 
@@ -140,7 +140,7 @@ public class ClothSim : MonoBehaviour
                         LineRenderer line = new GameObject("Line").AddComponent<LineRenderer>();
 
                         // Creates the connector that will link the particles
-                        //line.transform.SetParent(t, false);
+                        line.transform.SetParent(t, false);
 
                         Connector connector = new Connector();
                         //connector.particleOne = go;
@@ -170,7 +170,7 @@ public class ClothSim : MonoBehaviour
                     {
                         LineRenderer line = new GameObject("Line").AddComponent<LineRenderer>();
                         
-                        //line.transform.SetParent(t, false);
+                        line.transform.SetParent(t, false);
                         // Creates the connector that will link the particles
                         
                         Connector connector = new Connector();
@@ -221,7 +221,7 @@ public class ClothSim : MonoBehaviour
     float SinWindFunc(Particle p)
     {
 
-        return Mathf.Sin(p.position.x * p.position.y);
+        return Mathf.Sin(p.position.x * p.position.y)* Random.Range(1.5f,2.5f);
     }
 
     private void OnDrawGizmos()
@@ -240,32 +240,7 @@ public class ClothSim : MonoBehaviour
 
     void Update()
     {
-        //Vector3 mousePos= Input.mousePosition;
-        //Vector3 mousePos_new = Camera.main.ScreenToWorldPoint(mousePos);
-
-
-        //if(Input.GetMouseButton(0))
-        //{
-        //    for(int i=0; i<connectorList.Count; i++)
-        //    {
-        //        float dist = Vector3.Distance(mousePos_new, connectorList[i].particleOne.transform.position);
-        //        if(dist <= 1.05f)
-        //        {
-        //            connectorList[i].isEnabled = false;
-        //        }
-        //    }
-        //}
-
-        //for (int i=0; i<connectorList.Count; i++)
-        //{
-        //    float dist = Vector3.Distance(connectorList[i].pointOne.position, connectorList[i].pointTwo.position);
-            
-        //    if(dist > 1.4f)
-        //    {
-        //        connectorList[i].isEnabled = false;
-        //    }
-
-        //}
+        
         
     }
 
@@ -281,14 +256,16 @@ public class ClothSim : MonoBehaviour
             }
             else
             {        
-                particleList[p].velocity = (particleList[p].position - particleList[p].oldPos) * particleList[p].friction;
+                particleList[p].velocity = (particleList[p].position - particleList[p].oldPos) * particleList[p].friction*Time.fixedDeltaTime;
                 particleList[p].oldPos = particleList[p].position;
 
                 
                 particleList[p].position += particleList[p].velocity * particleList[p].dampValue;
-                particleList[p].position.x += ApplyWind() * Time.fixedDeltaTime;
                 //particleList[p].position.x += SinWindFunc(particleList[p]) * Time.fixedDeltaTime;
-                particleList[p].position.y += particleList[p].gravity * Time.fixedDeltaTime;
+
+                particleList[p].position.x += particleList[p].mass*ApplyWind() * Time.fixedDeltaTime;
+
+                particleList[p].position.y += particleList[p].mass * particleList[p].gravity * Time.fixedDeltaTime;
             }
         }
 
@@ -391,14 +368,8 @@ public class ClothSim : MonoBehaviour
         }
     }
 
-    
-
-
-
-    
-
     void CreateDiagConnector(GameObject gameObjOne, GameObject gameObjTwo, Particle particleOne, Particle particleTwo, float length)
-        {
+    {
             LineRenderer line = new GameObject("Line").AddComponent<LineRenderer>();
             
             //line.transform.SetParent(t, false);
@@ -418,7 +389,7 @@ public class ClothSim : MonoBehaviour
 
             connector.lineRender = line;
             connector.lineRender.material = connectorMaterial;
-        }
+    }
 
 }
 
