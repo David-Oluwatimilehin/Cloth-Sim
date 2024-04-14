@@ -1,10 +1,11 @@
 
+using System.Collections.Generic;
 using UnityEngine;
 
 public class Particle
 {
     public bool isPinned = false;
-
+    public List<Spring> connectedSprings= new List<Spring>();
     
     public Vector2 position;
     public Vector2 pinPos;
