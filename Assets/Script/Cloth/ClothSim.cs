@@ -10,11 +10,13 @@ public class ClothSim : MonoBehaviour
     private const float MaxInclusive = 30f;
 
     // Methods for determining wind should be globbally varying constant function
+    // ISSUE: The current wind function doesnt reset;
     // Do (sin (x*y*t), cos(z*t), sin(cos(5*x*y*z) ) ) For the Wind Vector
 
     // TODO: Change Mesh to be skinnedMesh attack bpnes for the connectors.
     // TODO: Figure out how to deform the mesh
     // TODO: REMOVE the pinned particles so that only the first and last particles of the row are pinned.
+    // TODO: Keep in mind 
 
     // Uses Verlet Intergration with velocity
     // Computed by taking the previous positions in account with the current and previous timestep
@@ -262,12 +264,10 @@ public class ClothSim : MonoBehaviour
         
         if (simulateWind)
         {
-           
-            
+            WindForce = Vector2.zero;
+
             WindForce = new Vector2(0.5f * airDensity * windSpeed * windSpeed *
                 (Mathf.PI * particleSize / 2 * particleSize / 2) * dragCooeficient, 0);
-            
-            
             
             WindForce = WindForce.magnitude * new Vector2(Random.Range(0, MaxInclusive), 0);
         }
