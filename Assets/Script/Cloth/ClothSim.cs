@@ -76,18 +76,12 @@ public class ClothSim : MonoBehaviour
         DragForce = Vector2.zero;
         particleColour = new Color(255, 0, 0);
         
-        //GenerateVertices();
-        //GenerateSkinnedMesh();
+        
         SetupPoints();
         
 
     }
-    private void GenerateSkinnedMesh()
-    {
-        GetComponent<MeshFilter>().mesh= clothMesh = new Mesh();
-        clothMesh.name = "Skinned Mesh";
-        
-    }
+   
 
     private void GenerateVertices()
     {
@@ -233,6 +227,7 @@ public class ClothSim : MonoBehaviour
         
         
     }
+
     Vector2 CalcForces(Particle p)
     {
         GravityForce = new Vector2(0, p.gravity * p.mass);
