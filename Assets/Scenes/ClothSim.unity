@@ -251,8 +251,10 @@ MonoBehaviour:
   rows: 18
   columns: 18
   spacing: 1
-  simulateWind: 0
+  stiffness: 0.2
+  simulateWind: 1
   airDensity: 1.23
+  airResistanceDragCoef: 0.5
   windSpeed: 10
   dragCooeficient: 0.6
   t: {fileID: 1365332114}

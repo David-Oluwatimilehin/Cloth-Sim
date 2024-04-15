@@ -7,6 +7,7 @@ using UnityEngine;
 
 public class ClothSim : MonoBehaviour
 {
+    private const float MaxInclusive = 30f;
 
     // Methods for determining wind should be globbally varying constant function
     // Do (sin (x*y*t), cos(z*t), sin(cos(5*x*y*z) ) ) For the Wind Vector
@@ -41,9 +42,11 @@ public class ClothSim : MonoBehaviour
     private List<Particle> particleList;
     private List<Connector> connectorList;
 
-    private Vector2 Wind;
-    private Vector2 Gravity;
-    private Vector2 AirResistance;
+    private Vector2 WindForce;
+    private Vector2 DragForce;
+    private Vector2 sumForces;
+    private Vector2 GravityForce;
+    private Vector2 AirResistanceForce;
     [Header("Particle Attributes")]
     public Transform t;
     public Color particleColour;
@@ -62,11 +65,11 @@ public class ClothSim : MonoBehaviour
         particleSpawnPosition = new Vector2(0, 0);
         
         // Set Initial Forces to Zero
-        Wind = Vector2.zero;
-        Gravity = Vector2.zero; 
-        AirResistance= Vector2.zero;
-
-
+        WindForce = Vector2.zero;
+        GravityForce = Vector2.zero; 
+        AirResistanceForce= Vector2.zero;
+        sumForces = Vector2.zero;
+        DragForce = Vector2.zero;
         particleColour = new Color(255, 0, 0);
 
         //GenerateVertices();
@@ -255,17 +258,23 @@ public class ClothSim : MonoBehaviour
     }
     Vector2 CalcForces(Particle p)
     {
-        Gravity = new Vector2(0, p.gravity * p.mass);
+        GravityForce = new Vector2(0, p.gravity * p.mass);
         
         if (simulateWind)
         {
-            Wind = new Vector2(0.5f * airDensity * windSpeed * windSpeed *
-                (3.14159f * particleSize / 2 * particleSize / 2) * dragCooeficient, 0);
+           
+            
+            WindForce = new Vector2(0.5f * airDensity * windSpeed * windSpeed *
+                (Mathf.PI * particleSize / 2 * particleSize / 2) * dragCooeficient, 0);
+            
+            
+            
+            WindForce = WindForce.magnitude * new Vector2(Random.Range(0, MaxInclusive), 0);
         }
 
-        AirResistance = -airResistanceDragCoef * p.velocity.magnitude*p.velocity;
+        AirResistanceForce = -airResistanceDragCoef * p.velocity.magnitude * p.velocity;
 
-        Vector2 sumForces = Gravity + Wind + AirResistance;
+        sumForces = GravityForce + WindForce + AirResistanceForce;
         
         foreach (var spring in p.connectedSprings)
         {
@@ -289,8 +298,15 @@ public class ClothSim : MonoBehaviour
             {
                 Vector2 netForce= CalcForces(particleList[p]);
 
-                particleList[p].velocity = (particleList[p].position - particleList[p].oldPos) * particleList[p].friction + netForce/particleList[p].mass * Time.fixedDeltaTime;
+                particleList[p].velocity = (particleList[p].position - particleList[p].oldPos) * particleList[p].friction +
+                    netForce/particleList[p].mass * Time.fixedDeltaTime;
                 
+                DragForce = new Vector2((particleList[p].mass * particleList[p].velocity.x * particleList[p].velocity.x / particleSize * particleSize) / 2,
+                 (particleList[p].mass * particleList[p].velocity.y * particleList[p].velocity.y / particleSize * particleSize) / 2).normalized;
+
+                DragForce = DragForce * particleList[p].velocity.magnitude*dragCooeficient;
+
+                particleList[p].velocity -= DragForce;
 
                 particleList[p].oldPos = particleList[p].position;
                 particleList[p].position += particleList[p].velocity * particleList[p].dampValue;
@@ -410,8 +426,6 @@ public class ClothSim : MonoBehaviour
             //connector.restLength = length;
 
             Connector connector = new Connector();
-            //connector.particleOne = gameObjOne;
-            //connector.particleTwo = gameObjTwo;
 
             connector.pointOne = particleOne;
             connector.pointTwo = particleTwo;
