@@ -1,4 +1,4 @@
-using System;
+
 using System.Collections;
 using System.Collections.Generic;
 
@@ -7,35 +7,50 @@ using UnityEngine;
 
 public class ClothSim : MonoBehaviour
 {
+    private const float MaxInclusive = 30f;
 
     // Methods for determining wind should be globbally varying constant function
+    // ISSUE: The current wind function doesnt reset;
     // Do (sin (x*y*t), cos(z*t), sin(cos(5*x*y*z) ) ) For the Wind Vector
 
-    // Uses Verlet Intergration without velocity
+    // TODO: Change Mesh to be skinnedMesh attack bpnes for the connectors.
+    // TODO: Figure out how to deform the mesh
+    // TODO: REMOVE the pinned particles so that only the first and last particles of the row are pinned.
+    // TODO: Keep in mind 
+
+    // Uses Verlet Intergration with velocity
     // Computed by taking the previous positions in account with the current and previous timestep
     [Header("Cloth Attributes")]
     [SerializeField] public int rows = 48;
     [SerializeField] public int columns = 48;
     [SerializeField] public float spacing = 1.0f;
-
+    [SerializeField] public float stiffness=0.2f;
     private Mesh clothMesh;
-
-
-    Vector2 spawnVec;
 
 
     [Header("Wind Attributes")]
     [SerializeField] public bool simulateWind;
     [SerializeField] public float airDensity;
+    [SerializeField] public float airResistanceDragCoef;
     [SerializeField] public float windSpeed;
     [SerializeField] public float dragCooeficient;
     //float springConstant = 2f;
 
-    
+    // 
     private Vector3[] clothVertices;
-    private List<Particle> particleList;
-    private List<Connector> connectorList;
-    
+    public List<Particle> particleList;
+    private List<Spring> springList;
+
+    // 
+    private Vector2 netForce;
+    private Vector2 changeDir;
+    private Vector2 WindForce;
+    private Vector2 DragForce;
+    private Vector2 sumForces;
+    private Vector2 GravityForce;
+    private Vector2 AirResistanceForce;
+
+
     [Header("Particle Attributes")]
     public Transform t;
     public Color particleColour;
@@ -43,23 +58,108 @@ public class ClothSim : MonoBehaviour
     [SerializeField] public float particleSize;
 
     Vector2 particleSpawnPosition;
-
+    
     void Start()
     {
         // Initializes the Lists
         particleList = new List<Particle>();
-        connectorList = new List<Connector>();
-        //sphereList = new List<GameObject>();
+        springList = new List<Spring>();
+        
 
         particleSpawnPosition = new Vector2(0, 0);
+        
+        // Set Initial Forces to Zero
+        changeDir= Vector2.zero;
+        netForce=Vector2.zero;
+        WindForce = Vector2.zero;
+        GravityForce = Vector2.zero; 
+        AirResistanceForce= Vector2.zero;
+        sumForces = Vector2.zero;
+        DragForce = Vector2.zero;
         particleColour = new Color(255, 0, 0);
         
-        GenerateVertices();
+        
         SetupPoints();
         
 
     }
+   
 
+    void SetupPoints()
+    {
+
+        for (int y = 0; y <= rows; y++)
+        {
+            for (int x = 0; x <= columns; x++)
+            {
+                    /* Creates the Partcles that will be added to the list*/
+                    Particle particle = new Particle();
+                    particle.pinPos = new Vector2(particleSpawnPosition.y, particleSpawnPosition.x);
+                    
+
+                    // Sets up X Connectors
+                    if (x != 0)
+                    {
+
+                        Particle connectedParticle = particleList[particleList.Count - 1];
+                        Spring spring = new Spring(particle, connectedParticle, spacing);
+
+                        spring.startParticle.position = particleSpawnPosition;
+                       
+
+                        springList.Add(spring);
+                        particle.connectedSprings.Add(spring);
+
+                        /*horizontalConnector.lineRender = line;
+                        //horizontalConnector.lineRender.material = connectorMaterial;
+
+                        if (y != 0)
+                        { 
+                            //CreateDiagConnector(go, sphereList[(y - 1) * (rows + 1) + (x - 1)], particle, particleList[(y - 1) * (rows + 1) + (x - 1)], Mathf.Sqrt(2) * spacing);
+                        }*/
+
+                }
+
+                    // Sets up Y Connectors
+                    if (y != 0) { 
+                                           
+
+                         Particle connectedParticle = particleList[(y - 1) * (rows + 1) + x];
+                         Spring spring = new Spring(particle, connectedParticle,spacing);
+                         
+                         spring.startParticle.position= particleSpawnPosition;
+                         
+                         
+                         springList.Add(spring);    
+                         particle.connectedSprings.Add(spring);
+
+                        /*if (x != 0)
+                        {
+                            // Top-right diagonal connectors
+                            //CreateDiagConnector(go, sphereList[(y - 1) * (rows + 1) + (x + 1)], particle, particleList[(y - 1) * (rows + 1) + (x + 1)], Mathf.Sqrt(2) * spacing);
+                        }
+                        if (x != columns)
+                        {
+                            // Top-left diagonal connectors
+                            //CreateDiagConnector(go, sphereList[(y - 1) * (rows + 1) + (x + 1)], particle, particleList[(y - 1) * (rows + 1) + (x + 1)],Mathf.Sqrt(2) * spacing);
+                        }*/
+                    }
+
+                    if(x == 0)
+                    {
+                        particle.isPinned = true;
+                    }
+                    particleSpawnPosition.x -= spacing;
+
+                    particleList.Add(particle);
+
+            }
+
+            particleSpawnPosition.x = 0;
+            particleSpawnPosition.y -= spacing;
+
+        }
+    }
     private void GenerateVertices()
     {
        
@@ -97,120 +197,133 @@ public class ClothSim : MonoBehaviour
     {
         PhysicsLoop();
     }
-
-    float ApplyWind()
+    void Update()
     {
-        Vector2 wind = Vector2.zero;
+        
+        
+    }
+
+    
+    void PhysicsLoop()
+    {
+        foreach (Particle p in particleList)
+        {
+            UpdateVerletBody(p);
+
+            ComputeConstraints(p);
+
+        }
+
+        DrawSpringConnectors();
+
+    }
+    void UpdateVerletBody(Particle particle)
+    {
+        if (!particle.isPinned)
+        {
+            netForce = CalcForces(particle);
+
+            particle.velocity = (particle.position - particle.oldPos) * particle.friction +
+                netForce / particle.mass * Time.fixedDeltaTime;
+
+            DragForce = new Vector2((particle.mass * particle.velocity.x * particle.velocity.x / particleSize * particleSize) / 2,
+            (particle.mass * particle.velocity.y * particle.velocity.y / particleSize * particleSize) / 2).normalized;
+
+            DragForce = DragForce * particle.velocity.magnitude * dragCooeficient;
+            particle.velocity -= DragForce;
+
+            /*float dragCoef = netForce.magnitude;
+
+            dragCoef = dragCooeficient * dragCoef + (dragCoef * dragCoef) * dragCooeficient * dragCooeficient;
+
+            netForce= netForce.normalized;
+            netForce *= -dragCoef;*/
+
+            particle.oldPos = particle.position;
+            particle.position += particle.velocity * particle.dampValue;
+            //particleList[p].position.x += SinWindFunc(particleList[p]) * Time.fixedDeltaTime;
+            //particleList[p].position.x += particleList[p].mass*ApplyWind() * Time.fixedDeltaTime;
+            //particleList[p].position.y += particleList[p].gravity * Time.fixedDeltaTime;
+        }
+        else
+        {
+            particle.position = particle.pinPos;
+            particle.oldPos = particle.pinPos;
+        }
+    }
+
+
+    Vector2 CalcForces(Particle p)
+    {
+        GravityForce = new Vector2(0, p.gravity * p.mass);
+        
         if (simulateWind)
         {
-            wind.x = 0.5f * airDensity * windSpeed * windSpeed *
-                (3.14159f * particleSize / 2 * particleSize / 2) * dragCooeficient;
+            WindForce = Vector2.zero;
+
+            WindForce = new Vector2(0.5f * airDensity * windSpeed * windSpeed *
+                (Mathf.PI * particleSize / 2 * particleSize / 2) * dragCooeficient, 0);
+            
+            WindForce = WindForce.magnitude * new Vector2(Random.Range(0, MaxInclusive), 0);
         }
 
-        return wind.x;
-    }
-    void SetupPoints()
-    {
+        AirResistanceForce = -airResistanceDragCoef * p.velocity.magnitude * p.velocity;
 
-        for (int y = 0; y <= rows; y++)
+        sumForces = GravityForce + WindForce + AirResistanceForce;
+        
+        foreach (var spring in p.connectedSprings)
         {
-            for (int x = 0; x <= columns; x++)
+            float currentLength= (p.position - spring.linkedParticle.position).magnitude;
+            float error = Mathf.Abs(currentLength-spring.restLength);
+            Vector2 springDir = (spring.linkedParticle.position - p.position).normalized;
+            Vector2 springForce = stiffness * error * springDir;
+
+            p.velocity += springForce;
+            spring.linkedParticle.velocity -= springForce;
+        }            
+        
+        return sumForces;
+    }
+    private void ComputeConstraints(Particle p)
+    {
+        foreach (var connector in p.connectedSprings)
+        {
+            if (connector.isEnabled)
             {
-                    // Creates the Partcles that will be added to the list
-                    Particle particle = new Particle();
-                    particle.pinPos = new Vector2( particleSpawnPosition.y,particleSpawnPosition.x);
+                float dist = (connector.startParticle.position - connector.linkedParticle.position).magnitude;
+                float error = Mathf.Abs(dist - connector.restLength);
 
+                if (dist > connector.restLength)
+                {
+                    changeDir = (connector.startParticle.position - connector.linkedParticle.position).normalized;
 
-                    spawnVec = new Vector2(particleSpawnPosition.y, particleSpawnPosition.x);
+                }
+                else if (dist < connector.restLength)
+                {
+                    changeDir = (connector.linkedParticle.position - connector.startParticle.position).normalized;
+                }
 
-                    // Sets up X Connectors
-                    if (x != 0)
-                    { 
-                        LineRenderer line = new GameObject("Line").AddComponent<LineRenderer>();
+                Vector2 changeAmount = changeDir * error;
 
-                        // Creates the connector that will link the particles
-                        //line.transform.SetParent(t, false);
-
-                        Connector connector = new Connector();
-                        //connector.particleOne = go;
-                        //connector.particleTwo = sphereList[sphereList.Count - 1];
-
-                        connector.pointOne = particle;
-                        connector.pointTwo = particleList[particleList.Count - 1];
-                        connector.pointOne.position = spawnVec;
-                        connector.pointTwo.oldPos = spawnVec;
-
-                        connector.restLength = spacing;
-
-                        connectorList.Add(connector);
-
-                        connector.lineRender = line;
-                        connector.lineRender.material = connectorMaterial;
-
-                        if (y != 0)
-                        { 
-                            //CreateDiagConnector(go, sphereList[(y - 1) * (rows + 1) + (x - 1)], particle, particleList[(y - 1) * (rows + 1) + (x - 1)], Mathf.Sqrt(2) * spacing);
-                        }
-
-                    }
-
-                    // Sets up Y Connectors
-                    if (y != 0)
-                    {
-                        LineRenderer line = new GameObject("Line").AddComponent<LineRenderer>();
-                        
-                        //line.transform.SetParent(t, false);
-                        // Creates the connector that will link the particles
-                        
-                        Connector connector = new Connector();
-                        //connector.particleOne = go;
-                        //connector.particleTwo = sphereList[(y - 1) * (rows + 1) + x];
-
-                        connector.pointOne = particle;
-                        connector.pointTwo = particleList[(y - 1) * (rows + 1) + x];
-
-                        connector.pointOne.position = spawnVec;
-                        connector.pointTwo.oldPos = spawnVec;
-
-                        connector.restLength = spacing;
-
-                        connectorList.Add(connector);
-
-                        connector.lineRender = line;
-                        connector.lineRender.material = connectorMaterial;
-
-                        /*if (x != 0)
-                        {
-                            // Top-right diagonal connectors
-                            //CreateDiagConnector(go, sphereList[(y - 1) * (rows + 1) + (x + 1)], particle, particleList[(y - 1) * (rows + 1) + (x + 1)], Mathf.Sqrt(2) * spacing);
-                        }
-                        if (x != columns)
-                        {
-                            // Top-left diagonal connectors
-                            //CreateDiagConnector(go, sphereList[(y - 1) * (rows + 1) + (x + 1)], particle, particleList[(y - 1) * (rows + 1) + (x + 1)],Mathf.Sqrt(2) * spacing);
-                        }*/
-                    }
-
-                    if(x == 0)
-                    {
-                        particle.isPinned = true;
-                    }
-                    particleSpawnPosition.x -= spacing;
-
-                    particleList.Add(particle);
-
+                connector.startParticle.position -= changeAmount * 0.5f;
+                connector.linkedParticle.position += changeAmount * 0.5f;
             }
 
-            particleSpawnPosition.x = 0;
-            particleSpawnPosition.y -= spacing;
-
         }
     }
 
-    float SinWindFunc(Particle p)
+    private void DrawSpringConnectors()
     {
-
-        return Mathf.Sin(p.position.x * p.position.y);
+        foreach(Spring spring in springList)
+        {
+            if(spring.startParticle!=null && spring.linkedParticle != null)
+            {
+                if (spring.isEnabled)
+                {
+                    Debug.DrawLine(spring.startParticle.position, spring.linkedParticle.position,Color.white);
+                }
+            }
+        }
     }
 
     private void OnDrawGizmos()
@@ -226,188 +339,6 @@ public class ClothSim : MonoBehaviour
             }
         }
     }
-
-    void Update()
-    {
-        //Vector3 mousePos= Input.mousePosition;
-        //Vector3 mousePos_new = Camera.main.ScreenToWorldPoint(mousePos);
-
-
-        //if(Input.GetMouseButton(0))
-        //{
-        //    for(int i=0; i<connectorList.Count; i++)
-        //    {
-        //        float dist = Vector3.Distance(mousePos_new, connectorList[i].particleOne.transform.position);
-        //        if(dist <= 1.05f)
-        //        {
-        //            connectorList[i].isEnabled = false;
-        //        }
-        //    }
-        //}
-
-        //for (int i=0; i<connectorList.Count; i++)
-        //{
-        //    float dist = Vector3.Distance(connectorList[i].pointOne.position, connectorList[i].pointTwo.position);
-            
-        //    if(dist > 1.4f)
-        //    {
-        //        connectorList[i].isEnabled = false;
-        //    }
-
-        //}
-        
-    }
-
-    void PhysicsLoop()
-    {
-        for(int p=0; p<particleList.Count; p++)
-        {
-            
-            if (particleList[p].isPinned==true)
-            {
-                particleList[p].position = particleList[p].pinPos;
-                particleList[p].oldPos = particleList[p].pinPos;
-            }
-            else
-            {        
-                particleList[p].velocity = (particleList[p].position - particleList[p].oldPos) * particleList[p].friction;
-                particleList[p].oldPos = particleList[p].position;
-
-                
-                particleList[p].position += particleList[p].velocity * particleList[p].dampValue;
-                particleList[p].position.x += ApplyWind() * Time.fixedDeltaTime;
-                //particleList[p].position.x += SinWindFunc(particleList[p]) * Time.fixedDeltaTime;
-                particleList[p].position.y += particleList[p].gravity * Time.fixedDeltaTime;
-            }
-        }
-
-        foreach (var connector in connectorList)
-        {
-            if (connector.isEnabled)
-            {
-                float dist = (connector.pointOne.position - connector.pointTwo.position).magnitude;
-                float error = Mathf.Abs(dist - spacing);
-
-                if (dist > spacing)
-                {
-                    connector.changeDir = (connector.pointOne.position - connector.pointTwo.position).normalized;
-
-                }else if (dist < spacing)
-                {
-                    connector.changeDir = (connector.pointTwo.position - connector.pointOne.position).normalized;
-                }
-
-                Vector2 changeAmount = connector.changeDir * error;
-                
-                connector.pointOne.position -= changeAmount * 0.5f;
-                connector.pointTwo.position += changeAmount * 0.5f;
-            }
-            else
-            {
-                // Do Nothing
-            }
-        
-        }
-
-        
-
-        for (int i=0; i < connectorList.Count; i++)
-        {
-            if (connectorList[i].isEnabled == false)
-            {
-                Destroy(connectorList[i].lineRender);
-            }
-            else
-            {
-                var points = new Vector3[2];
-                points[0] = connectorList[i].pointOne.position;
-                points[1] = connectorList[i].pointTwo.position;
-
-                connectorList[i].lineRender.startWidth = 0.04f;
-                connectorList[i].lineRender.endWidth = 0.04f;
-                connectorList[i].lineRender.SetPositions(points);
-
-            }
-        }
-
-    }
-
-
-    void UpdateVerletBody()
-    {
-        //var startDist = 0.5f;
-
-
-        foreach (var particle in particleList)
-        {
-            if (particle.isPinned)
-            {
-                particle.position = particle.pinPos;
-                particle.oldPos = particle.pinPos;
-            }
-            else
-            {
-                // Calculate new position using Verlet integration
-                Vector3 newPos = 2 * particle.position - particle.oldPos + particle.acc * Time.fixedDeltaTime * Time.fixedDeltaTime;
-                particle.oldPos = particle.position;
-
-                // Apply damping
-                Vector3 vel = (newPos - (Vector3)particle.oldPos) / Time.fixedDeltaTime;
-                newPos += particle.dampValue * vel;
-
-                // Update position
-                particle.position = newPos;
-            }
-        }
-
-
-
-        // Update connectors
-        foreach (var connector in connectorList)
-        {
-            if (connector.isEnabled)
-            {
-                Vector3 delta = connector.pointTwo.position - connector.pointOne.position;
-                float dist = delta.magnitude;
-                float error = dist - connector.restLength;
-
-                Vector3 dir = delta.normalized;
-                //Vector3 force = stiffness * error * dir;
-
-                //connector.pointOne.acc += (Vector2)force;
-                //connector.pointTwo.acc -= (Vector2)force;
-            }
-        }
-    }
-
-    
-
-
-
-    
-
-    void CreateDiagConnector(GameObject gameObjOne, GameObject gameObjTwo, Particle particleOne, Particle particleTwo, float length)
-        {
-            LineRenderer line = new GameObject("Line").AddComponent<LineRenderer>();
-            
-            //line.transform.SetParent(t, false);
-            //connector.restLength = length;
-
-            Connector connector = new Connector();
-            //connector.particleOne = gameObjOne;
-            //connector.particleTwo = gameObjTwo;
-
-            connector.pointOne = particleOne;
-            connector.pointTwo = particleTwo;
-
-            connector.pointOne.position = gameObjOne.transform.position;
-            connector.pointTwo.oldPos = gameObjTwo.transform.position;
-
-            connectorList.Add(connector);
-
-            connector.lineRender = line;
-            connector.lineRender.material = connectorMaterial;
-        }
 
 }
 
