@@ -38,10 +38,11 @@ public class ClothSim : MonoBehaviour
 
     // 
     private Vector3[] clothVertices;
-    private List<Particle> particleList;
+    public List<Particle> particleList;
     private List<Spring> springList;
 
     // 
+    private Vector2 netForce;
     private Vector2 changeDir;
     private Vector2 WindForce;
     private Vector2 DragForce;
@@ -69,6 +70,7 @@ public class ClothSim : MonoBehaviour
         
         // Set Initial Forces to Zero
         changeDir= Vector2.zero;
+        netForce=Vector2.zero;
         WindForce = Vector2.zero;
         GravityForce = Vector2.zero; 
         AirResistanceForce= Vector2.zero;
@@ -103,7 +105,7 @@ public class ClothSim : MonoBehaviour
                         Spring spring = new Spring(particle, connectedParticle, spacing);
 
                         spring.startParticle.position = particleSpawnPosition;
-                        spring.linkedParticle.oldPos = particleSpawnPosition;
+                       
 
                         springList.Add(spring);
                         particle.connectedSprings.Add(spring);
@@ -126,7 +128,7 @@ public class ClothSim : MonoBehaviour
                          Spring spring = new Spring(particle, connectedParticle,spacing);
                          
                          spring.startParticle.position= particleSpawnPosition;
-                         spring.linkedParticle.oldPos= particleSpawnPosition;
+                         
                          
                          springList.Add(spring);    
                          particle.connectedSprings.Add(spring);
@@ -219,16 +221,23 @@ public class ClothSim : MonoBehaviour
     {
         if (!particle.isPinned)
         {
-            Vector2 netForce = CalcForces(particle);
+            netForce = CalcForces(particle);
 
             particle.velocity = (particle.position - particle.oldPos) * particle.friction +
                 netForce / particle.mass * Time.fixedDeltaTime;
 
             DragForce = new Vector2((particle.mass * particle.velocity.x * particle.velocity.x / particleSize * particleSize) / 2,
-             (particle.mass * particle.velocity.y * particle.velocity.y / particleSize * particleSize) / 2).normalized;
+            (particle.mass * particle.velocity.y * particle.velocity.y / particleSize * particleSize) / 2).normalized;
 
             DragForce = DragForce * particle.velocity.magnitude * dragCooeficient;
             particle.velocity -= DragForce;
+
+            /*float dragCoef = netForce.magnitude;
+
+            dragCoef = dragCooeficient * dragCoef + (dragCoef * dragCoef) * dragCooeficient * dragCooeficient;
+
+            netForce= netForce.normalized;
+            netForce *= -dragCoef;*/
 
             particle.oldPos = particle.position;
             particle.position += particle.velocity * particle.dampValue;

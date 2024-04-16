@@ -12,10 +12,11 @@ public class Particle
     public Vector2 oldPos;
     public Vector2 velocity;
 
-    public float mass = 1.2f;
+    public float energy;
+    public float mass = 0.5f;
     public Vector2 acc = new Vector2();
 
     public float friction = 0.60f;
-    public float gravity = -0.40f;
-    public float dampValue = 0.8f;
+    public float gravity = -0.981f;
+    public float dampValue = 0.4f;
 }
