@@ -77,9 +77,10 @@ public class ClothSim : MonoBehaviour
         AirResistanceForce= Vector2.zero;
         sumForces = Vector2.zero;
         DragForce = Vector2.zero;
+
+
+
         particleColour = new Color(0, 250, 0);
-        
-        
         SetupPoints();
         
 
