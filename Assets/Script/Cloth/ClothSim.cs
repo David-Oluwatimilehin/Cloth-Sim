@@ -63,7 +63,7 @@ public class ClothSim : MonoBehaviour
         // Initializes the Lists
         particleList = new List<Particle>();
         springList = new List<Spring>();
-        //sphereList = new List<GameObject>();
+        
 
         particleSpawnPosition = new Vector2(0, 0);
         
@@ -83,55 +83,6 @@ public class ClothSim : MonoBehaviour
     }
    
 
-    private void GenerateVertices()
-    {
-       
-        GetComponent<MeshFilter>().mesh = clothMesh = new Mesh();
-        clothMesh.name = "Procedural Cloth";
-
-        clothVertices = new Vector3[(rows + 1) * (columns + 1)];
-        for (int i = 0, y = 0; y <= columns; y++)
-        {
-            for (int x = 0; x <= rows; x++, i++)
-            {
-                clothVertices[i] = new Vector3(-x, -y);
-            }
-        }
-        clothMesh.vertices = clothVertices;
-
-        int[] triangles = new int[rows * columns * 6];
-        for (int ti = 0, vi = 0, y = 0; y < columns; y++, vi++)
-        {
-            for (int x = 0; x < rows; x++, ti += 6, vi++)
-            {
-                triangles[ti] = vi;
-                triangles[ti + 3] = triangles[ti + 2] = vi + 1;
-                triangles[ti + 4] = triangles[ti + 1] = vi + rows + 1;
-                triangles[ti + 5] = vi + rows + 2;
-                
-            }
-        }
-        clothMesh.triangles = triangles;
-        
-
-    }
-    // Update is called once per frame
-    void FixedUpdate()
-    {
-        PhysicsLoop();
-    }
-
-    float ApplyWind()
-    {
-        Vector2 windval = Vector2.zero;
-        if (simulateWind)
-        {
-            windval.x = 0.5f * airDensity * windSpeed * windSpeed *
-                (3.14159f * particleSize / 2 * particleSize / 2) * dragCooeficient;
-        }
-
-        return windval.x * Random.Range(1.5F, 2.3F);
-    }
     void SetupPoints()
     {
 
@@ -207,26 +158,91 @@ public class ClothSim : MonoBehaviour
 
         }
     }
-
-    private void OnDrawGizmos()
+    private void GenerateVertices()
     {
-        
-        Gizmos.color = particleColour;
-        if (particleList != null){
-            
+       
+        GetComponent<MeshFilter>().mesh = clothMesh = new Mesh();
+        clothMesh.name = "Procedural Cloth";
 
-            for(int i=0; i<particleList.Count; ++i)
+        clothVertices = new Vector3[(rows + 1) * (columns + 1)];
+        for (int i = 0, y = 0; y <= columns; y++)
+        {
+            for (int x = 0; x <= rows; x++, i++)
             {
-                Gizmos.DrawSphere(particleList[i].position, particleSize);
+                clothVertices[i] = new Vector3(-x, -y);
             }
         }
-    }
+        clothMesh.vertices = clothVertices;
 
+        int[] triangles = new int[rows * columns * 6];
+        for (int ti = 0, vi = 0, y = 0; y < columns; y++, vi++)
+        {
+            for (int x = 0; x < rows; x++, ti += 6, vi++)
+            {
+                triangles[ti] = vi;
+                triangles[ti + 3] = triangles[ti + 2] = vi + 1;
+                triangles[ti + 4] = triangles[ti + 1] = vi + rows + 1;
+                triangles[ti + 5] = vi + rows + 2;
+                
+            }
+        }
+        clothMesh.triangles = triangles;
+        
+
+    }
+    // Update is called once per frame
+    void FixedUpdate()
+    {
+        PhysicsLoop();
+    }
     void Update()
     {
         
         
     }
+
+    
+    void PhysicsLoop()
+    {
+        foreach (Particle p in particleList)
+        {
+            UpdateVerletBody(p);
+
+            ComputeConstraints(p);
+
+        }
+
+        DrawSpringConnectors();
+
+    }
+    void UpdateVerletBody(Particle particle)
+    {
+        if (!particle.isPinned)
+        {
+            Vector2 netForce = CalcForces(particle);
+
+            particle.velocity = (particle.position - particle.oldPos) * particle.friction +
+                netForce / particle.mass * Time.fixedDeltaTime;
+
+            DragForce = new Vector2((particle.mass * particle.velocity.x * particle.velocity.x / particleSize * particleSize) / 2,
+             (particle.mass * particle.velocity.y * particle.velocity.y / particleSize * particleSize) / 2).normalized;
+
+            DragForce = DragForce * particle.velocity.magnitude * dragCooeficient;
+            particle.velocity -= DragForce;
+
+            particle.oldPos = particle.position;
+            particle.position += particle.velocity * particle.dampValue;
+            //particleList[p].position.x += SinWindFunc(particleList[p]) * Time.fixedDeltaTime;
+            //particleList[p].position.x += particleList[p].mass*ApplyWind() * Time.fixedDeltaTime;
+            //particleList[p].position.y += particleList[p].gravity * Time.fixedDeltaTime;
+        }
+        else
+        {
+            particle.position = particle.pinPos;
+            particle.oldPos = particle.pinPos;
+        }
+    }
+
 
     Vector2 CalcForces(Particle p)
     {
@@ -259,34 +275,6 @@ public class ClothSim : MonoBehaviour
         
         return sumForces;
     }
-    void PhysicsLoop()
-    {
-        foreach (Particle p in particleList)
-        {
-            UpdateVerletBody(p);
-
-            ComputeConstraints(p);
-
-        }
-
-        DrawSpringConnectors();
-
-    }
-
-    private void DrawSpringConnectors()
-    {
-        foreach(Spring spring in springList)
-        {
-            if(spring.startParticle!=null && spring.linkedParticle != null)
-            {
-                if (spring.isEnabled)
-                {
-                    Debug.DrawLine(spring.startParticle.position, spring.linkedParticle.position,Color.white);
-                }
-            }
-        }
-    }
-
     private void ComputeConstraints(Particle p)
     {
         foreach (var connector in p.connectedSprings)
@@ -315,38 +303,33 @@ public class ClothSim : MonoBehaviour
         }
     }
 
-    void UpdateVerletBody(Particle particle)
+    private void DrawSpringConnectors()
     {
-        if (!particle.isPinned)
+        foreach(Spring spring in springList)
         {
-            Vector2 netForce = CalcForces(particle);
-
-            particle.velocity = (particle.position - particle.oldPos) * particle.friction +
-                netForce / particle.mass * Time.fixedDeltaTime;
-
-            DragForce = new Vector2((particle.mass * particle.velocity.x * particle.velocity.x / particleSize * particleSize) / 2,
-             (particle.mass * particle.velocity.y * particle.velocity.y / particleSize * particleSize) / 2).normalized;
-
-            DragForce = DragForce * particle.velocity.magnitude * dragCooeficient;
-            particle.velocity -= DragForce;
-
-            particle.oldPos = particle.position;
-            particle.position += particle.velocity * particle.dampValue;
-            //particleList[p].position.x += SinWindFunc(particleList[p]) * Time.fixedDeltaTime;
-            //particleList[p].position.x += particleList[p].mass*ApplyWind() * Time.fixedDeltaTime;
-            //particleList[p].position.y += particleList[p].gravity * Time.fixedDeltaTime;
+            if(spring.startParticle!=null && spring.linkedParticle != null)
+            {
+                if (spring.isEnabled)
+                {
+                    Debug.DrawLine(spring.startParticle.position, spring.linkedParticle.position,Color.white);
+                }
+            }
         }
-        else
-        {
-            particle.position = particle.pinPos;
-            particle.oldPos = particle.pinPos;
-        }
-
-
-
     }
 
-    
+    private void OnDrawGizmos()
+    {
+        
+        Gizmos.color = particleColour;
+        if (particleList != null){
+            
+
+            for(int i=0; i<particleList.Count; ++i)
+            {
+                Gizmos.DrawSphere(particleList[i].position, particleSize);
+            }
+        }
+    }
 
 }
 
