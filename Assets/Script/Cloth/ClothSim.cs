@@ -1,7 +1,7 @@
 
 using System.Collections;
 using System.Collections.Generic;
-
+using Unity.VisualScripting;
 using UnityEngine;
 
 
@@ -40,6 +40,7 @@ public class ClothSim : MonoBehaviour
     private Vector3[] clothVertices;
     public List<Particle> particleList;
     private List<Spring> springList;
+    private List<DiagonalSpring> diagSpringList;
 
     // 
     private Vector2 netForce;
@@ -64,7 +65,7 @@ public class ClothSim : MonoBehaviour
         // Initializes the Lists
         particleList = new List<Particle>();
         springList = new List<Spring>();
-        
+        diagSpringList = new List<DiagonalSpring>();
 
         particleSpawnPosition = new Vector2(0, 0);
         
@@ -76,7 +77,7 @@ public class ClothSim : MonoBehaviour
         AirResistanceForce= Vector2.zero;
         sumForces = Vector2.zero;
         DragForce = Vector2.zero;
-        particleColour = new Color(255, 0, 0);
+        particleColour = new Color(0, 250, 0);
         
         
         SetupPoints();
@@ -111,14 +112,25 @@ public class ClothSim : MonoBehaviour
                         particle.connectedSprings.Add(spring);
 
                         /*horizontalConnector.lineRender = line;
-                        //horizontalConnector.lineRender.material = connectorMaterial;
+                        //horizontalConnector.lineRender.material = connectorMaterial;*/
 
-                        if (y != 0)
-                        { 
-                            //CreateDiagConnector(go, sphereList[(y - 1) * (rows + 1) + (x - 1)], particle, particleList[(y - 1) * (rows + 1) + (x - 1)], Mathf.Sqrt(2) * spacing);
+                        /*if (y != 0)
+                        {
+                            DiagonalSpring topLeftSpring = new DiagonalSpring(particle, particleList[(y + 1) * 
+                                (rows + 1) + (x - 1)], Mathf.Sqrt(2) * spacing);
+                            diagSpringList.Add(topLeftSpring);
+
                         }*/
 
-                }
+                    }
+                        if (x > 0 && y > 0)
+                        {
+                            // Top-left diagonal connectors
+                            DiagonalSpring topLeftSpring = new DiagonalSpring(particle, particleList[(y - 1) *
+                                (rows + 1) + (x - 1)], Mathf.Sqrt(2) * spacing);
+                            diagSpringList.Add(topLeftSpring);
+                            
+                        }
 
                     // Sets up Y Connectors
                     if (y != 0) { 
@@ -133,17 +145,15 @@ public class ClothSim : MonoBehaviour
                          springList.Add(spring);    
                          particle.connectedSprings.Add(spring);
 
-                        /*if (x != 0)
+
+                    }
+                        if (x < columns && y > 0)
                         {
                             // Top-right diagonal connectors
-                            //CreateDiagConnector(go, sphereList[(y - 1) * (rows + 1) + (x + 1)], particle, particleList[(y - 1) * (rows + 1) + (x + 1)], Mathf.Sqrt(2) * spacing);
+                            DiagonalSpring topRightSpring = new DiagonalSpring(particle, particleList[(y - 1) *
+                                (rows + 1) + (x + 1)], Mathf.Sqrt(2) * spacing);
+                            diagSpringList.Add(topRightSpring);
                         }
-                        if (x != columns)
-                        {
-                            // Top-left diagonal connectors
-                            //CreateDiagConnector(go, sphereList[(y - 1) * (rows + 1) + (x + 1)], particle, particleList[(y - 1) * (rows + 1) + (x + 1)],Mathf.Sqrt(2) * spacing);
-                        }*/
-                    }
 
                     if(x == 0)
                     {
@@ -213,6 +223,7 @@ public class ClothSim : MonoBehaviour
             ComputeConstraints(p);
 
         }
+        ComputeDiagConstraints();
 
         DrawSpringConnectors();
 
@@ -311,24 +322,57 @@ public class ClothSim : MonoBehaviour
 
         }
     }
+    private void ComputeDiagConstraints()
+    {
+        foreach (var diagonalSpring in diagSpringList)
+        {
+            Vector2 delta = diagonalSpring.particleTwo.position - diagonalSpring.particleOne.position;
+            
+            float dist = delta.magnitude;
+            float error = Mathf.Abs(dist - diagonalSpring.restlength);
+            
+            Vector2 dir = delta.normalized;
+            Vector2 force = stiffness * error * dir;
+
+            diagonalSpring.particleOne.velocity += force * 0.5f;
+            diagonalSpring.particleTwo.velocity -= force * 0.5f;
+        }
+    }
 
     private void DrawSpringConnectors()
     {
-        foreach(Spring spring in springList)
+        foreach (var spring in springList)
         {
-            if(spring.startParticle!=null && spring.linkedParticle != null)
+
+            if (spring.startParticle != null && spring.linkedParticle != null)
             {
+
                 if (spring.isEnabled)
                 {
-                    Debug.DrawLine(spring.startParticle.position, spring.linkedParticle.position,Color.white);
+                    Debug.DrawLine(spring.startParticle.position, spring.linkedParticle.position, Color.white);
                 }
             }
         }
+
+        /*foreach (var diag in diagSpringList)
+        {
+
+            if (diag.particleOne != null && diag.particleTwo != null)
+            {
+
+                if (diag.isEnabled)
+                {
+                    Debug.DrawLine(diag.particleOne.position, diag.particleTwo.position, Color.white);
+                }
+            }
+        }*/
+
+
+
     }
 
     private void OnDrawGizmos()
     {
-        
         Gizmos.color = particleColour;
         if (particleList != null){
             
