@@ -41,6 +41,8 @@ public class ClothSim : MonoBehaviour
     public List<Particle> particleList;
     private List<Spring> springList;
     private List<DiagonalSpring> diagSpringList;
+    private List<BendingSpring> bendingSpringList;
+
 
     // 
     private Vector2 netForce;
@@ -64,8 +66,11 @@ public class ClothSim : MonoBehaviour
     {
         // Initializes the Lists
         particleList = new List<Particle>();
+        
         springList = new List<Spring>();
         diagSpringList = new List<DiagonalSpring>();
+        bendingSpringList = new List<BendingSpring>();
+
 
         particleSpawnPosition = new Vector2(0, 0);
         
@@ -90,79 +95,75 @@ public class ClothSim : MonoBehaviour
     void SetupPoints()
     {
 
-        for (int y = 0; y <= rows; y++)
-        {
-            for (int x = 0; x <= columns; x++)
-            {
-                    /* Creates the Partcles that will be added to the list*/
-                    Particle particle = new Particle();
-                    particle.pinPos = new Vector2(particleSpawnPosition.y, particleSpawnPosition.x);
+        for (int y = 0; y <= rows; y++){
+            for (int x = 0; x <= columns; x++){
+
+                /* Creates the Partcles that will be added to the list*/
+                Particle particle = new Particle();
+                particle.pinPos = new Vector2(particleSpawnPosition.y, particleSpawnPosition.x);
                     
 
-                    // Sets up X Connectors
-                    if (x != 0)
-                    {
+                // Sets up X Connectors
+                if (x != 0)
+                {       
+                    Particle connectedParticle = particleList[particleList.Count - 1];
+                    Spring spring = new Spring(particle, connectedParticle, spacing);
 
-                        Particle connectedParticle = particleList[particleList.Count - 1];
-                        Spring spring = new Spring(particle, connectedParticle, spacing);
-
-                        spring.startParticle.position = particleSpawnPosition;
+                    spring.startParticle.position = particleSpawnPosition;
                        
 
-                        springList.Add(spring);
-                        particle.connectedSprings.Add(spring);
+                    springList.Add(spring);
+                    particle.connectedSprings.Add(spring);
+                }
+                if (x > 0 && y > 0)
+                {
+                    // Top-left diagonal connectors
+                    DiagonalSpring topLeftSpring = new DiagonalSpring(particle, particleList[(y - 1) *
+                          (rows + 1) + (x - 1)], Mathf.Sqrt(2) * spacing);
+                    diagSpringList.Add(topLeftSpring);
+                }
 
-                        /*horizontalConnector.lineRender = line;
-                        //horizontalConnector.lineRender.material = connectorMaterial;*/
-
-                        /*if (y != 0)
-                        {
-                            DiagonalSpring topLeftSpring = new DiagonalSpring(particle, particleList[(y + 1) * 
-                                (rows + 1) + (x - 1)], Mathf.Sqrt(2) * spacing);
-                            diagSpringList.Add(topLeftSpring);
-
-                        }*/
-
-                    }
-                        if (x > 0 && y > 0)
-                        {
-                            // Top-left diagonal connectors
-                            DiagonalSpring topLeftSpring = new DiagonalSpring(particle, particleList[(y - 1) *
-                                (rows + 1) + (x - 1)], Mathf.Sqrt(2) * spacing);
-                            diagSpringList.Add(topLeftSpring);
-                            
-                        }
-
-                    // Sets up Y Connectors
-                    if (y != 0) { 
-                                           
-
-                         Particle connectedParticle = particleList[(y - 1) * (rows + 1) + x];
-                         Spring spring = new Spring(particle, connectedParticle,spacing);
-                         
-                         spring.startParticle.position= particleSpawnPosition;
-                         
-                         
-                         springList.Add(spring);    
-                         particle.connectedSprings.Add(spring);
+                if (x < columns - 1)
+                {
+                    BendingSpring bendingSping = new BendingSpring(particle, particleList[y * (rows + 1) + (x + 1)], particleList[y * (rows + 1) + (x + 2)], Mathf.PI);
+                    bendingSpringList.Add(bendingSping);
+                }
 
 
-                    }
-                        if (x < columns && y > 0)
-                        {
-                            // Top-right diagonal connectors
-                            DiagonalSpring topRightSpring = new DiagonalSpring(particle, particleList[(y - 1) *
-                                (rows + 1) + (x + 1)], Mathf.Sqrt(2) * spacing);
-                            diagSpringList.Add(topRightSpring);
-                        }
+                // Sets up Y Connectors
+                if (y != 0) {
+                    
+                    Particle connectedParticle = particleList[(y - 1) * (rows + 1) + x];
+                    Spring spring = new Spring(particle, connectedParticle,spacing);
 
-                    if(x == 0)
-                    {
-                        particle.isPinned = true;
-                    }
-                    particleSpawnPosition.x -= spacing;
+                    spring.startParticle.position = particleSpawnPosition;
 
-                    particleList.Add(particle);
+                    springList.Add(spring);
+                    particle.connectedSprings.Add(spring);
+
+                }
+
+                if (x < columns && y > 0)
+                {
+                    // Top-right diagonal connectors
+                    DiagonalSpring topRightSpring = new DiagonalSpring(particle, particleList[(y - 1) *
+                         (rows + 1) + (x + 1)], Mathf.Sqrt(2) * spacing);
+                    diagSpringList.Add(topRightSpring);
+                }
+
+                if (y < rows - 1)
+                {
+                    BendingSpring bendingSping = new BendingSpring(particle, particleList[(y + 1) * (rows + 1) + x], particleList[(y + 2) * (rows + 1) + x], Mathf.PI);
+                    bendingSpringList.Add(bendingSping);
+                }
+
+                if (x == 0)
+                {
+                    particle.isPinned = true;
+                }
+                particleSpawnPosition.x -= spacing;
+
+                particleList.Add(particle);
 
             }
 
@@ -228,6 +229,22 @@ public class ClothSim : MonoBehaviour
 
         DrawSpringConnectors();
 
+    }
+    void ComputeBendConstraints()
+    {
+        foreach (var bendingSpring in bendingSpringList)
+        {
+            Vector2 dirAB;
+            Vector2 dirCB;
+
+            float angle;
+            float error;
+
+            Vector2 forceAB;
+            Vector2 forceCB;
+
+
+        }
     }
     void UpdateVerletBody(Particle particle)
     {
