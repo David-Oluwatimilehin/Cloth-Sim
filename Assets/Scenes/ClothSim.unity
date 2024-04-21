@@ -248,15 +248,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 454971d552dbf9d46a8ac1480a17c503, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  rows: 18
-  columns: 18
+  rows: 20
+  columns: 20
   spacing: 1
-  stiffness: 0.6
+  springConstant: 1.2
   simulateWind: 0
   airDensity: 1.23
   airResistanceDragCoef: 0.5
-  windSpeed: 10
-  dragCooeficient: 0.6
+  windSpeed: 20
+  dragCooeficient: 0.2
   t: {fileID: 1365332114}
   particleColour: {r: 0, g: 1, b: 0.077444315, a: 0}
   connectorMaterial: {fileID: 2100000, guid: 644317fa152c685479a50dc43adf111c, type: 2}
@@ -269,7 +269,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1193469950}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 3.49, z: 0}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -379,7 +379,6 @@ GameObject:
   - component: {fileID: 1837617885}
   - component: {fileID: 1837617884}
   - component: {fileID: 1837617883}
-  - component: {fileID: 1837617886}
   m_Layer: 0
   m_Name: Main Camera
   m_TagString: MainCamera
@@ -454,25 +453,10 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1837617882}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -5.5, y: -9.5, z: -10}
+  m_LocalPosition: {x: -5.5, y: -9.5, z: -20}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &1837617886
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1837617882}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: d735cda6fdffcd54081060f835117efa, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  zoomSpeed: 5
-  minSpeed: 1
-  maxSpeed: 10

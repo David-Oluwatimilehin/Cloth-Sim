@@ -24,7 +24,7 @@ public class ClothSim : MonoBehaviour
     [SerializeField] public int rows = 48;
     [SerializeField] public int columns = 48;
     [SerializeField] public float spacing = 1.0f;
-    [SerializeField] public float stiffness=0.2f;
+    [SerializeField] public float springConstant=0.2f;
     private Mesh clothMesh;
 
 
@@ -85,7 +85,7 @@ public class ClothSim : MonoBehaviour
 
 
 
-        particleColour = new Color(0, 250, 0);
+        particleColour = new Color(250, 0, 0);
         SetupPoints();
         
 
@@ -114,6 +114,13 @@ public class ClothSim : MonoBehaviour
 
                     springList.Add(spring);
                     particle.connectedSprings.Add(spring);
+
+                    /*if (x < columns - 1)
+                    {
+                        BendingSpring bendingSping = new BendingSpring(particle, particleList[y * (rows + 1) + (x + 1)], particleList[y * (rows + 1) + (x + 2)], Mathf.PI);
+                        bendingSpringList.Add(bendingSping);
+                    }*/
+                    
                 }
                 if (x > 0 && y > 0)
                 {
@@ -123,11 +130,7 @@ public class ClothSim : MonoBehaviour
                     diagSpringList.Add(topLeftSpring);
                 }
 
-                if (x < columns - 1)
-                {
-                    BendingSpring bendingSping = new BendingSpring(particle, particleList[y * (rows + 1) + (x + 1)], particleList[y * (rows + 1) + (x + 2)], Mathf.PI);
-                    bendingSpringList.Add(bendingSping);
-                }
+                
 
 
                 // Sets up Y Connectors
@@ -141,6 +144,12 @@ public class ClothSim : MonoBehaviour
                     springList.Add(spring);
                     particle.connectedSprings.Add(spring);
 
+                    /*if (y < rows - 1)
+                    {
+                        BendingSpring bendingSping = new BendingSpring(particle, particleList[(y + 1) * (rows + 1) + x], particleList[(y + 2) * (rows + 1) + x], Mathf.PI);
+                        bendingSpringList.Add(bendingSping);
+                    }*/
+
                 }
 
                 if (x < columns && y > 0)
@@ -151,13 +160,9 @@ public class ClothSim : MonoBehaviour
                     diagSpringList.Add(topRightSpring);
                 }
 
-                if (y < rows - 1)
-                {
-                    BendingSpring bendingSping = new BendingSpring(particle, particleList[(y + 1) * (rows + 1) + x], particleList[(y + 2) * (rows + 1) + x], Mathf.PI);
-                    bendingSpringList.Add(bendingSping);
-                }
+                
 
-                if (x == 0)
+                if (x == 0 && y == 0 || y == rows && x == 0 || y == rows/2 && x == 0)
                 {
                     particle.isPinned = true;
                 }
@@ -172,38 +177,7 @@ public class ClothSim : MonoBehaviour
 
         }
     }
-    private void GenerateVertices()
-    {
-       
-        GetComponent<MeshFilter>().mesh = clothMesh = new Mesh();
-        clothMesh.name = "Procedural Cloth";
-
-        clothVertices = new Vector3[(rows + 1) * (columns + 1)];
-        for (int i = 0, y = 0; y <= columns; y++)
-        {
-            for (int x = 0; x <= rows; x++, i++)
-            {
-                clothVertices[i] = new Vector3(-x, -y);
-            }
-        }
-        clothMesh.vertices = clothVertices;
-
-        int[] triangles = new int[rows * columns * 6];
-        for (int ti = 0, vi = 0, y = 0; y < columns; y++, vi++)
-        {
-            for (int x = 0; x < rows; x++, ti += 6, vi++)
-            {
-                triangles[ti] = vi;
-                triangles[ti + 3] = triangles[ti + 2] = vi + 1;
-                triangles[ti + 4] = triangles[ti + 1] = vi + rows + 1;
-                triangles[ti + 5] = vi + rows + 2;
-                
-            }
-        }
-        clothMesh.triangles = triangles;
-        
-
-    }
+    
     // Update is called once per frame
     void FixedUpdate()
     {
@@ -226,6 +200,7 @@ public class ClothSim : MonoBehaviour
 
         }
         ComputeDiagConstraints();
+        //ComputeBendConstraints();
 
         DrawSpringConnectors();
 
@@ -234,16 +209,17 @@ public class ClothSim : MonoBehaviour
     {
         foreach (var bendingSpring in bendingSpringList)
         {
-            Vector2 dirAB;
-            Vector2 dirCB;
+            Vector2 dirAB = bendingSpring.particleOne.position - bendingSpring.particleTwo.position;
+            Vector2 dirCB = bendingSpring.particleThree.position - bendingSpring.particleTwo.position;
 
-            float angle;
-            float error;
+            float angle= Vector2.SignedAngle(dirAB,dirCB);
+            float error = Mathf.Abs(angle - bendingSpring.restAngle);
 
-            Vector2 forceAB;
-            Vector2 forceCB;
+            Vector2 forceAB = springConstant * error * dirAB.normalized;
+            Vector2 forceCB = springConstant * error * dirCB.normalized;
 
-
+            bendingSpring.particleOne.position += forceAB;
+            bendingSpring.particleThree.position += forceCB;
         }
     }
     void UpdateVerletBody(Particle particle)
@@ -251,6 +227,8 @@ public class ClothSim : MonoBehaviour
         if (!particle.isPinned)
         {
             netForce = CalcForces(particle);
+
+            netForce += new Vector2(0, particle.gravity * particle.mass);
 
             particle.velocity = (particle.position - particle.oldPos) * particle.friction +
                 netForce / particle.mass * Time.fixedDeltaTime;
@@ -288,12 +266,14 @@ public class ClothSim : MonoBehaviour
         
         if (simulateWind)
         {
-            WindForce = Vector2.zero;
-
             WindForce = new Vector2(0.5f * airDensity * windSpeed * windSpeed *
                 (Mathf.PI * particleSize / 2 * particleSize / 2) * dragCooeficient, 0);
             
             WindForce = WindForce.magnitude * new Vector2(Random.Range(0, MaxInclusive), 0);
+        }
+        else
+        {
+            WindForce = Vector2.zero;
         }
 
         AirResistanceForce = -airResistanceDragCoef * p.velocity.magnitude * p.velocity;
@@ -305,7 +285,7 @@ public class ClothSim : MonoBehaviour
             float currentLength= (p.position - spring.linkedParticle.position).magnitude;
             float error = Mathf.Abs(currentLength-spring.restLength);
             Vector2 springDir = (spring.linkedParticle.position - p.position).normalized;
-            Vector2 springForce = stiffness * error * springDir;
+            Vector2 springForce = springConstant * error * springDir;
 
             p.velocity += springForce;
             spring.linkedParticle.velocity -= springForce;
@@ -350,7 +330,7 @@ public class ClothSim : MonoBehaviour
             float error = Mathf.Abs(dist - diagonalSpring.restlength);
             
             Vector2 dir = delta.normalized;
-            Vector2 force = stiffness * error * dir;
+            Vector2 force = springConstant * error * dir;
 
             diagonalSpring.particleOne.velocity += force * 0.5f;
             diagonalSpring.particleTwo.velocity -= force * 0.5f;
@@ -369,6 +349,15 @@ public class ClothSim : MonoBehaviour
                 {
                     Debug.DrawLine(spring.startParticle.position, spring.linkedParticle.position, Color.white);
                 }
+            }
+        }
+
+        foreach (var bendSpring in bendingSpringList)
+        {
+
+            if (bendSpring.particleOne != null && bendSpring.particleThree != null)
+            {
+                Debug.DrawLine(bendSpring.particleOne.position, bendSpring.particleThree.position, Color.green);
             }
         }
 
