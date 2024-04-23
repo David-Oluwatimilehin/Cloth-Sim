@@ -70,9 +70,8 @@ public class ClothSim : MonoBehaviour
         springList = new List<Spring>();
         diagSpringList = new List<DiagonalSpring>();
         bendingSpringList = new List<BendingSpring>();
-
-
-        particleSpawnPosition = new Vector2(0, 0);
+       
+        particleSpawnPosition = new Vector2(t.position.x, t.position.y);
         
         // Set Initial Forces to Zero
         changeDir= Vector2.zero;
@@ -101,7 +100,6 @@ public class ClothSim : MonoBehaviour
                 /* Creates the Partcles that will be added to the list*/
                 Particle particle = new Particle();
                 particle.pinPos = new Vector2(particleSpawnPosition.y, particleSpawnPosition.x);
-                    
 
                 // Sets up X Connectors
                 if (x != 0)

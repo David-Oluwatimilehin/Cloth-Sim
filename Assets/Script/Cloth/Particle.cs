@@ -13,7 +13,7 @@ public class Particle
     public Vector2 velocity;
 
     public float energy;
-    public float mass = 0.5f;
+    public float mass = 1f;
     public Vector2 acc = new Vector2();
 
     public float friction = 0.60f;
