@@ -11,7 +11,7 @@ public class ClothSim : MonoBehaviour
 
     // Methods for determining wind should be globbally varying constant function
     // ISSUE: The current wind function doesnt reset;
-    // Do (sin (x*y*t), cos(z*t), sin(cos(5*x*y*z) ) ) For the Wind Vector
+    // ISSUE: The particle needs to be pin correctl
 
     // TODO: Change Mesh to be skinnedMesh attack bpnes for the connectors.
     // TODO: Figure out how to deform the mesh
@@ -20,9 +20,11 @@ public class ClothSim : MonoBehaviour
 
     // Uses Verlet Intergration with velocity
     // Computed by taking the previous positions in account with the current and previous timestep
+
+
     [Header("Cloth Attributes")]
-    [SerializeField] public int rows = 48;
-    [SerializeField] public int columns = 48;
+    [SerializeField] public int rows;
+    [SerializeField] public int columns;
     [SerializeField] public float spacing = 1.0f;
     [SerializeField] public float springConstant=0.2f;
     private Mesh clothMesh;
@@ -47,6 +49,7 @@ public class ClothSim : MonoBehaviour
     // 
     private Vector2 netForce;
     private Vector2 changeDir;
+    private Vector2 changeDiagDir;
     private Vector2 WindForce;
     private Vector2 DragForce;
     private Vector2 sumForces;
@@ -56,6 +59,10 @@ public class ClothSim : MonoBehaviour
 
     [Header("Particle Attributes")]
     public Transform t;
+    public bool showDiagConstraints;
+    public bool showStructuralConstraints;
+    public bool showParticles;
+
     public Color particleColour;
     public Material connectorMaterial;
     [SerializeField] public float particleSize;
@@ -82,8 +89,6 @@ public class ClothSim : MonoBehaviour
         sumForces = Vector2.zero;
         DragForce = Vector2.zero;
 
-
-
         particleColour = new Color(250, 0, 0);
         SetupPoints();
         
@@ -93,9 +98,8 @@ public class ClothSim : MonoBehaviour
 
     void SetupPoints()
     {
-
-        for (int y = 0; y <= rows; y++){
-            for (int x = 0; x <= columns; x++){
+        for (int y = 0; y <= rows; y++) {
+            for (int x = 0; x <= columns; x++) {
 
                 /* Creates the Partcles that will be added to the list*/
                 Particle particle = new Particle();
@@ -120,16 +124,14 @@ public class ClothSim : MonoBehaviour
                     }*/
                     
                 }
-                if (x > 0 && y > 0)
-                {
+
+                if (x > 0 && y > 0) {
+
                     // Top-left diagonal connectors
                     DiagonalSpring topLeftSpring = new DiagonalSpring(particle, particleList[(y - 1) *
                           (rows + 1) + (x - 1)], Mathf.Sqrt(2) * spacing);
                     diagSpringList.Add(topLeftSpring);
                 }
-
-                
-
 
                 // Sets up Y Connectors
                 if (y != 0) {
@@ -149,6 +151,8 @@ public class ClothSim : MonoBehaviour
                     }*/
 
                 }
+                
+                
 
                 if (x < columns && y > 0)
                 {
@@ -158,12 +162,12 @@ public class ClothSim : MonoBehaviour
                     diagSpringList.Add(topRightSpring);
                 }
 
-                
-
-                if (x == 0 && y == 0 || y == rows && x == 0 || y == rows/2 && x == 0)
+                if (x == 0 && y == 0 || y == rows && x == 0 || y == rows / 2 && x == 0)
                 {
                     particle.isPinned = true;
                 }
+
+                
                 particleSpawnPosition.x -= spacing;
 
                 particleList.Add(particle);
@@ -183,8 +187,8 @@ public class ClothSim : MonoBehaviour
     }
     void Update()
     {
-        
-        
+
+        //DrawSpringConnectors();
     }
 
     
@@ -200,9 +204,10 @@ public class ClothSim : MonoBehaviour
         ComputeDiagConstraints();
         //ComputeBendConstraints();
 
-        DrawSpringConnectors();
+        
 
     }
+
     void ComputeBendConstraints()
     {
         foreach (var bendingSpring in bendingSpringList)
@@ -220,16 +225,17 @@ public class ClothSim : MonoBehaviour
             bendingSpring.particleThree.position += forceCB;
         }
     }
+
     void UpdateVerletBody(Particle particle)
     {
         if (!particle.isPinned)
         {
             netForce = CalcForces(particle);
 
-            netForce += new Vector2(0, particle.gravity * particle.mass);
-
-            particle.velocity = (particle.position - particle.oldPos) * particle.friction +
+            particle.velocity = (particle.position - particle.oldPos) +
                 netForce / particle.mass * Time.fixedDeltaTime;
+
+            DragForce = Vector2.zero;
 
             DragForce = new Vector2((particle.mass * particle.velocity.x * particle.velocity.x / particleSize * particleSize) / 2,
             (particle.mass * particle.velocity.y * particle.velocity.y / particleSize * particleSize) / 2).normalized;
@@ -257,21 +263,24 @@ public class ClothSim : MonoBehaviour
         }
     }
 
-
+    void ResetForces()
+    {
+        GravityForce = Vector2.zero;
+        WindForce = Vector2.zero;
+        AirResistanceForce = Vector2.zero;
+    }
     Vector2 CalcForces(Particle p)
     {
-        GravityForce = new Vector2(0, p.gravity * p.mass);
-        
+        ResetForces();
+
+        GravityForce = new Vector2(0, p.gravity * p.mass) * 10f;
+
         if (simulateWind)
         {
             WindForce = new Vector2(0.5f * airDensity * windSpeed * windSpeed *
                 (Mathf.PI * particleSize / 2 * particleSize / 2) * dragCooeficient, 0);
             
             WindForce = WindForce.magnitude * new Vector2(Random.Range(0, MaxInclusive), 0);
-        }
-        else
-        {
-            WindForce = Vector2.zero;
         }
 
         AirResistanceForce = -airResistanceDragCoef * p.velocity.magnitude * p.velocity;
@@ -307,10 +316,11 @@ public class ClothSim : MonoBehaviour
                 }
                 else if (dist < connector.restLength)
                 {
-                    changeDir = (connector.linkedParticle.position - connector.startParticle.position).normalized;
+                    changeDir = (connector.linkedParticle.position + connector.startParticle.position).normalized;
                 }
 
                 Vector2 changeAmount = changeDir * error;
+                
 
                 connector.startParticle.position -= changeAmount * 0.5f;
                 connector.linkedParticle.position += changeAmount * 0.5f;
@@ -318,20 +328,25 @@ public class ClothSim : MonoBehaviour
 
         }
     }
+
     private void ComputeDiagConstraints()
     {
         foreach (var diagonalSpring in diagSpringList)
         {
-            Vector2 delta = diagonalSpring.particleTwo.position - diagonalSpring.particleOne.position;
+            if (diagonalSpring.isEnabled)
+            {
+                float distance= (diagonalSpring.particleOne.position - diagonalSpring.particleTwo.position).magnitude;
+                float errorChange = Mathf.Abs(distance - diagonalSpring.restlength);
             
-            float dist = delta.magnitude;
-            float error = Mathf.Abs(dist - diagonalSpring.restlength);
-            
-            Vector2 dir = delta.normalized;
-            Vector2 force = springConstant * error * dir;
 
-            diagonalSpring.particleOne.velocity += force * 0.5f;
-            diagonalSpring.particleTwo.velocity -= force * 0.5f;
+                Vector2 changeDiagAmount = changeDiagDir * errorChange;
+            
+                diagonalSpring.particleOne.position += changeDiagAmount * 0.5f;
+                diagonalSpring.particleTwo.position += changeDiagAmount * 0.5f;
+
+            }
+
+            
         }
     }
 
@@ -345,7 +360,7 @@ public class ClothSim : MonoBehaviour
 
                 if (spring.isEnabled)
                 {
-                    Debug.DrawLine(spring.startParticle.position, spring.linkedParticle.position, Color.white);
+                    Debug.DrawLine(spring.startParticle.position, spring.linkedParticle.position, Color.white,Time.deltaTime);
                 }
             }
         }
@@ -355,36 +370,51 @@ public class ClothSim : MonoBehaviour
 
             if (bendSpring.particleOne != null && bendSpring.particleThree != null)
             {
-                Debug.DrawLine(bendSpring.particleOne.position, bendSpring.particleThree.position, Color.green);
+                
+                Debug.DrawLine(bendSpring.particleOne.position, bendSpring.particleThree.position, Color.white);
             }
         }
-
-        /*foreach (var diag in diagSpringList)
-        {
-
-            if (diag.particleOne != null && diag.particleTwo != null)
-            {
-
-                if (diag.isEnabled)
-                {
-                    Debug.DrawLine(diag.particleOne.position, diag.particleTwo.position, Color.white);
-                }
-            }
-        }*/
-
-
 
     }
 
     private void OnDrawGizmos()
     {
-        Gizmos.color = particleColour;
+        
         if (particleList != null){
-            
+            if (showParticles){
+                Gizmos.color = particleColour;
+                for(int i=0; i<particleList.Count; ++i)
+                {
+                    Gizmos.DrawSphere(particleList[i].position, particleSize);
+                }
+            }
+        }
 
-            for(int i=0; i<particleList.Count; ++i)
-            {
-                Gizmos.DrawSphere(particleList[i].position, particleSize);
+        
+        if (diagSpringList != null) { 
+            if (showDiagConstraints){
+                Gizmos.color=Color.white;
+                foreach (var spring in diagSpringList)
+                {
+                    if (spring.isEnabled)
+                    {
+                        Gizmos.DrawLine(spring.particleOne.position, spring.particleTwo.position);
+                    }
+                }
+            }
+        }
+        
+        if (springList!= null){
+            if (showStructuralConstraints) {        
+            
+                Gizmos.color= Color.white;
+                foreach (var spring in springList)
+                {
+                    if (spring.isEnabled)
+                    {
+                        Gizmos.DrawLine(spring.startParticle.position, spring.linkedParticle.position);
+                    }
+                }
             }
         }
     }
