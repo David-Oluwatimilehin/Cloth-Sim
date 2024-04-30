@@ -16,11 +16,16 @@ public class FlameSystem : MonoBehaviour
 
 
     [Header("Particle Information")]
-    public float spawnSize;
+    
     public float minSpeed;
     public float maxSpeed;
+    public float particleLifetime;
     public float spawnRadius;
+    public float particleSize;
     public int numberOfParticles;
+    public Vector3 emitterVelocity;
+
+    
 
     public List<FlameParticle> particleList;
     public GameObject particlePrefab;
@@ -39,10 +44,8 @@ public class FlameSystem : MonoBehaviour
     {
         Vector3 velocity = Vector3.zero;
         Vector3 normal = spawnArea.position.normalized;
-
-        velocity = new Vector3(Random.Range(-3, 3), Random.Range(minSpeed, maxSpeed), 0);
         
-
+        velocity = new Vector3(Random.Range(-0.5f, 0.5f), Random.Range(minSpeed, maxSpeed), 0);
         velocity *= normal.magnitude;
 
         return velocity;
@@ -61,12 +64,16 @@ public class FlameSystem : MonoBehaviour
             particlePrefab = Instantiate(particlePrefab, new Vector3(spawnSphere.x, spawnSphere.y, spawnSphere.z), Quaternion.identity);
             particlePrefab.name = "Particle: " + (i + 1);
             particlePrefab.transform.SetParent(spawnArea, false);
+
             
+            particlePrefab.GetComponent<FlameParticle>().lifetime = particleLifetime;
+            particlePrefab.GetComponent<FlameParticle>().size = particleSize;
+            
+
             particleList.Add(particlePrefab.GetComponent<FlameParticle>());
 
             particleList[i].pos = spawnSphere;
-            particleList[i].vel = ComputeVelocity();
-            particleList[i].size = spawnSize;
+            particleList[i].vel = ComputeVelocity();       
             
             nrAlive++;
         }
@@ -92,11 +99,13 @@ public class FlameSystem : MonoBehaviour
     }
     void Update()
     {
-        
-        for (int i=0; i<particleList.Count; i++)
-        {
-            particleList[i].pos += particleList[i].vel * Time.deltaTime;
 
+        foreach (var particle in particleList)
+        {
+            if (particlePrefab != null)
+            {
+                particle.lifetime -= Time.time;
+            }
         }
 
 
@@ -104,8 +113,12 @@ public class FlameSystem : MonoBehaviour
     }
     private void FixedUpdate()
     {
+        for (int i = 0; i < particleList.Count; i++)
+        {
+            particleList[i].pos += particleList[i].vel * Time.fixedDeltaTime;
 
-        
+        }
+
 
     }
 

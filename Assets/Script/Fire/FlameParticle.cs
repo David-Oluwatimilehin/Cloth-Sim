@@ -17,7 +17,7 @@ public class FlameParticle : MonoBehaviour
     
     private SpriteRenderer spriteSheet;
     private SphereCollider col;
-    public Color color;
+    
 
     public void Start()
     {
