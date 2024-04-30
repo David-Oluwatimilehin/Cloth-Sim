@@ -8,7 +8,7 @@ public class FlameSystem : MonoBehaviour
 {
     private Camera cam;
         
-    [Ser]public Vector3 boxExtents;
+    [SerializeField]public Vector3 boxExtents;
     private Vector3 spawnSphere;
 
     public Transform t;
@@ -22,10 +22,7 @@ public class FlameSystem : MonoBehaviour
     public float spawnRadius;
     public int numberOfParticles;
 
-    public BlendShapeBufferRange[] blendShapes;
-
     public List<FlameParticle> particleList;
-    
     public GameObject particlePrefab;
     
     public int nrAlive;
@@ -38,7 +35,18 @@ public class FlameSystem : MonoBehaviour
 
         ParticleInitialisation();
     }
+    public Vector3 ComputeVelocity()
+    {
+        Vector3 velocity = Vector3.zero;
+        Vector3 normal = spawnArea.position.normalized;
 
+        velocity = new Vector3(Random.Range(-3, 3), Random.Range(minSpeed, maxSpeed), 0);
+        
+
+        velocity *= normal.magnitude;
+
+        return velocity;
+    } 
     private void ParticleInitialisation()
     {
         for (int i=0; i<numberOfParticles; i++)
@@ -46,19 +54,18 @@ public class FlameSystem : MonoBehaviour
             //particlesList.pos = new Vector3(spawnSphere.x, spawnSphere.y, Random.Range(-1, 1));
             //spawnSphere = new Vector3(Random.Range(spawnSphere.x, spawnSphere.y), Random.Range(-1, 1));
 
-            
+            spawnSphere = spawnArea.position;
             spawnSphere += Random.insideUnitSphere * spawnRadius;
-            spawnSphere += spawnArea.position;
-
-            particlePrefab = Instantiate(particlePrefab, new Vector3(spawnSphere.x, spawnSphere.y, 0), Quaternion.identity);
-            particlePrefab.name = "Particle" + i;
-            particlePrefab.transform.SetParent(spawnArea, false);
             
+
+            particlePrefab = Instantiate(particlePrefab, new Vector3(spawnSphere.x, spawnSphere.y, spawnSphere.z), Quaternion.identity);
+            particlePrefab.name = "Particle: " + (i + 1);
+            particlePrefab.transform.SetParent(spawnArea, false);
             
             particleList.Add(particlePrefab.GetComponent<FlameParticle>());
 
             particleList[i].pos = spawnSphere;
-            particleList[i].vel = new Vector2(Random.Range(minSpeed, maxSpeed), Random.Range(minSpeed, maxSpeed));
+            particleList[i].vel = ComputeVelocity();
             particleList[i].size = spawnSize;
             
             nrAlive++;
@@ -71,7 +78,7 @@ public class FlameSystem : MonoBehaviour
         Gizmos.DrawWireCube(transform.position, boxExtents);
         
         Gizmos.color = Color.red;
-        Gizmos.DrawWireSphere(spawnArea.position, 0.5f);
+        Gizmos.DrawWireSphere(spawnArea.position, spawnRadius);
 
         if (particleList != null)
         {
