@@ -6,54 +6,62 @@ using UnityEngine;
 
 public class FlameSystem : MonoBehaviour
 {
-    public Camera cam;
+    private Camera cam;
+        
+    [Ser]public Vector3 boxExtents;
+    private Vector3 spawnSphere;
 
-    [SerializeField]
-    public Texture2D texture;
-    [SerializeField]
+    public Transform t;
+    public Transform spawnArea;
+
+
+    [Header("Particle Information")]
+    public float spawnSize;
+    public float minSpeed;
+    public float maxSpeed;
+    public float spawnRadius;
     public int numberOfParticles;
-
-    [SerializeField]
-    public Vector3 boxExtents;
-    [SerializeField]
-    public Vector2 spawnSphere;
-
-
-    [SerializeField]
-    public Vector3 minSpeed;
-    [SerializeField]
-    public Vector3 maxSpeed;
 
     public BlendShapeBufferRange[] blendShapes;
 
-    private FlameParticle[] particles;
-
+    public List<FlameParticle> particleList;
+    
+    public GameObject particlePrefab;
     
     public int nrAlive;
 
     void Start()
     {
         cam = Camera.main;
-        
-        particles = new FlameParticle[numberOfParticles];
+
+        particleList = new List<FlameParticle>();
 
         ParticleInitialisation();
     }
 
     private void ParticleInitialisation()
     {
-        for(int i = 0; i < numberOfParticles; i++)
+        for (int i=0; i<numberOfParticles; i++)
         {
-            particles[i] = new FlameParticle();
-            
-            particles[i].pos = new Vector3(spawnSphere.x,spawnSphere.y, Random.Range(-1,1));
-            particles[i].size = Random.Range(0.01f, 0.05f);
-            particles[i].color = Color.red;
-            
-            particles[i].vel = new Vector3(Random.Range(minSpeed.x,maxSpeed.x), Random.Range(minSpeed.y, maxSpeed.y), Random.Range(minSpeed.z, maxSpeed.z));
-            
+            //particlesList.pos = new Vector3(spawnSphere.x, spawnSphere.y, Random.Range(-1, 1));
+            //spawnSphere = new Vector3(Random.Range(spawnSphere.x, spawnSphere.y), Random.Range(-1, 1));
 
             
+            spawnSphere += Random.insideUnitSphere * spawnRadius;
+            spawnSphere += spawnArea.position;
+
+            particlePrefab = Instantiate(particlePrefab, new Vector3(spawnSphere.x, spawnSphere.y, 0), Quaternion.identity);
+            particlePrefab.name = "Particle" + i;
+            particlePrefab.transform.SetParent(spawnArea, false);
+            
+            
+            particleList.Add(particlePrefab.GetComponent<FlameParticle>());
+
+            particleList[i].pos = spawnSphere;
+            particleList[i].vel = new Vector2(Random.Range(minSpeed, maxSpeed), Random.Range(minSpeed, maxSpeed));
+            particleList[i].size = spawnSize;
+            
+            nrAlive++;
         }
     }
 
@@ -62,16 +70,15 @@ public class FlameSystem : MonoBehaviour
         Gizmos.color = Color.green;
         Gizmos.DrawWireCube(transform.position, boxExtents);
         
-        //Gizmos.color = Color.red;
-        //Gizmos.DrawWireSphere(spawnSphere, 0.5f);
+        Gizmos.color = Color.red;
+        Gizmos.DrawWireSphere(spawnArea.position, 0.5f);
 
-        if (particles != null)
+        if (particleList != null)
         {
             Gizmos.color=Color.red;
-            for (int i=0; i<particles.Length; i++)
-            {   
-                
-                Gizmos.DrawSphere(particles[i].pos, particles[i].size);
+            foreach (var particle in particleList)
+            {
+                Gizmos.DrawSphere(particle.pos,particle.size);
             }
         }
         
@@ -79,9 +86,9 @@ public class FlameSystem : MonoBehaviour
     void Update()
     {
         
-        for (int i=0; i<particles.Length; i++)
+        for (int i=0; i<particleList.Count; i++)
         {
-            particles[i].pos += particles[i].vel * Time.deltaTime;
+            particleList[i].pos += particleList[i].vel * Time.deltaTime;
 
         }
 
@@ -98,9 +105,12 @@ public class FlameSystem : MonoBehaviour
 
     void LateUpdate()
     {
-        transform.LookAt(cam.transform);
+        Vector3 newRotation = cam.transform.eulerAngles;
 
-        transform.Rotate(0, 180, 0);
+        newRotation.x = 0;
+        newRotation.z = 0;
+
+        transform.eulerAngles = newRotation;
     }
 
 }
