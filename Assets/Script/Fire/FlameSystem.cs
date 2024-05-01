@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using Unity.VisualScripting;
 using UnityEngine;
+using static UnityEngine.ParticleSystem;
 
 public class FlameSystem : MonoBehaviour
 {
@@ -14,12 +15,13 @@ public class FlameSystem : MonoBehaviour
     public Transform t;
     public Transform spawnArea;
 
-
+    
     [Header("Particle Information")]
     
     public float minSpeed;
     public float maxSpeed;
     public float particleLifetime;
+    
     public float spawnRadius;
     public float particleSize;
     public int numberOfParticles;
@@ -35,7 +37,7 @@ public class FlameSystem : MonoBehaviour
     void Start()
     {
         cam = Camera.main;
-
+        
         particleList = new List<FlameParticle>();
 
         ParticleInitialisation();
@@ -78,6 +80,12 @@ public class FlameSystem : MonoBehaviour
             nrAlive++;
         }
     }
+    private void ResetParticlePositions(FlameParticle particle)
+    {
+        particle.pos = new Vector3(spawnArea.position.x,spawnArea.position.y,spawnArea.position.z);
+        
+
+    }
 
     private void OnDrawGizmos()
     {
@@ -100,25 +108,29 @@ public class FlameSystem : MonoBehaviour
     void Update()
     {
 
-        foreach (var particle in particleList)
-        {
-            if (particlePrefab != null)
-            {
-                particle.lifetime -= Time.time;
-            }
-        }
-
-
+        
 
     }
     private void FixedUpdate()
     {
         for (int i = 0; i < particleList.Count; i++)
         {
-            particleList[i].pos += particleList[i].vel * Time.fixedDeltaTime;
+            
+            if (particleList[i].lifetime < 0)
+            {
+                ResetParticlePositions(particleList[i]);
+                particleList[i].lifetime = particleLifetime;
+            }
+            else 
+            {
+                Time.timeScale = 1.0f;
+                particleList[i].lifetime -= Time.fixedTime*Time.timeScale;
+                particleList[i].pos += particleList[i].vel * Time.fixedDeltaTime;
+            }
+            
+            
 
         }
-
 
     }
 

@@ -9999,9 +9999,9 @@ MonoBehaviour:
   spawnArea: {fileID: 1397442790}
   minSpeed: 1.5
   maxSpeed: 2
-  particleLifetime: 0
+  particleLifetime: 15
   spawnRadius: 0.15
-  particleSize: 0
+  particleSize: 0.1
   numberOfParticles: 25
   emitterVelocity: {x: 0, y: 0, z: 0}
   particleList: []
