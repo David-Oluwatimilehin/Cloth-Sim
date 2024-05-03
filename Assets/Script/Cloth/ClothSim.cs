@@ -36,7 +36,7 @@ public class ClothSim : MonoBehaviour
     [SerializeField] public float airResistanceDragCoef;
     [SerializeField] public float windSpeed;
     [SerializeField] public float dragCooeficient;
-    //float springConstant = 2f;
+    
 
     // 
     private Vector3[] clothVertices;
@@ -92,7 +92,6 @@ public class ClothSim : MonoBehaviour
         particleColour = new Color(250, 0, 0);
         SetupPoints();
         
-
     }
    
 
@@ -251,7 +250,7 @@ public class ClothSim : MonoBehaviour
             netForce *= -dragCoef;*/
 
             particle.oldPos = particle.position;
-            particle.position += particle.velocity * particle.dampValue;
+            particle.position += particle.velocity* particle.dampValue;
             //particleList[p].position.x += SinWindFunc(particleList[p]) * Time.fixedDeltaTime;
             //particleList[p].position.x += particleList[p].mass*ApplyWind() * Time.fixedDeltaTime;
             //particleList[p].position.y += particleList[p].gravity * Time.fixedDeltaTime;
@@ -379,44 +378,54 @@ public class ClothSim : MonoBehaviour
 
     private void OnDrawGizmos()
     {
-        
-        if (particleList != null){
             if (showParticles){
                 Gizmos.color = particleColour;
-                for(int i=0; i<particleList.Count; ++i)
+                if(!particleList.IsUnityNull())
                 {
-                    Gizmos.DrawSphere(particleList[i].position, particleSize);
-                }
-            }
-        }
-
-        
-        if (diagSpringList != null) { 
-            if (showDiagConstraints){
-                Gizmos.color=Color.white;
-                foreach (var spring in diagSpringList)
-                {
-                    if (spring.isEnabled)
+                    for(int i=0; i<particleList.Count; ++i)
                     {
-                        Gizmos.DrawLine(spring.particleOne.position, spring.particleTwo.position);
+                        Gizmos.DrawSphere(particleList[i].position, particleSize);
                     }
                 }
             }
-        }
+
         
-        if (springList!= null){
+        
+        
+                
+        
+            if (showDiagConstraints){
+                Gizmos.color=Color.white;
+
+                if (!diagSpringList.IsUnityNull())
+                {
+                    foreach (var spring in diagSpringList)
+                    {
+                        if (spring.isEnabled)
+                        {
+                            Gizmos.DrawLine(spring.particleOne.position, spring.particleTwo.position);
+                        }
+                    }
+                }
+            }
+        
+        
+        
             if (showStructuralConstraints) {        
             
                 Gizmos.color= Color.white;
-                foreach (var spring in springList)
+                if (!diagSpringList.IsUnityNull())
                 {
-                    if (spring.isEnabled)
+                    foreach (var spring in springList)
                     {
-                        Gizmos.DrawLine(spring.startParticle.position, spring.linkedParticle.position);
+                        if (spring.isEnabled)
+                        {
+                            Gizmos.DrawLine(spring.startParticle.position, spring.linkedParticle.position);
+                        }
                     }
                 }
             }
-        }
+        
     }
 
 }
