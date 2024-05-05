@@ -12,6 +12,9 @@ public class FlameParticle : MonoBehaviour
     public Vector3 vel;
 
     int energy;
+    public Color colour;
+    
+    public bool isEnabled;
     public float size;
     public float lifetime;
     
@@ -25,11 +28,13 @@ public class FlameParticle : MonoBehaviour
         spriteSheet.size = new Vector2(size,size);
         
         col=GetComponent<SphereCollider>();   
-        col.radius = size;
+        
     }
 
     public void Update()
     {
+        col.radius = size;
+        
         transform.position = pos;
     }
 }

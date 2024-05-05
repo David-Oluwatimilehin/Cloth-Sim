@@ -27,20 +27,28 @@ public class FlameSystem : MonoBehaviour
     public int numberOfParticles;
     public Vector3 emitterVelocity;
 
-    
-
     public List<FlameParticle> particleList;
     public GameObject particlePrefab;
     
     public int nrAlive;
-
+    public Gradient gradient;
+    public int maxNum;
+    private Vector3 gravity;
+    private float sizeRatio;
+    
     void Start()
     {
         cam = Camera.main;
         
         particleList = new List<FlameParticle>();
-
+        gravity = new Vector3(0, 0, 0);
         ParticleInitialisation();
+        
+        if (cam == null)
+        {
+            Debug.LogError("Camera reference is null!");
+            return;
+        }
     }
     public Vector3 ComputeVelocity()
     {
@@ -50,11 +58,13 @@ public class FlameSystem : MonoBehaviour
         velocity = new Vector3(Random.Range(-0.5f, 0.5f), Random.Range(minSpeed, maxSpeed), 0);
         velocity *= normal.magnitude;
 
+        velocity += gravity;
+
         return velocity;
     } 
     private void ParticleInitialisation()
     {
-        for (int i=0; i<numberOfParticles; i++)
+        for (int i=0; i<maxNum; i++)
         {
             //particlesList.pos = new Vector3(spawnSphere.x, spawnSphere.y, Random.Range(-1, 1));
             //spawnSphere = new Vector3(Random.Range(spawnSphere.x, spawnSphere.y), Random.Range(-1, 1));
@@ -62,29 +72,34 @@ public class FlameSystem : MonoBehaviour
             spawnSphere = spawnArea.position;
             spawnSphere += Random.insideUnitSphere * spawnRadius;
             
-
             particlePrefab = Instantiate(particlePrefab, new Vector3(spawnSphere.x, spawnSphere.y, spawnSphere.z), Quaternion.identity);
             particlePrefab.name = "Particle: " + (i + 1);
             particlePrefab.transform.SetParent(spawnArea, false);
 
-            
+            particlePrefab.GetComponent<FlameParticle>().isEnabled = false;
             particlePrefab.GetComponent<FlameParticle>().lifetime = particleLifetime;
             particlePrefab.GetComponent<FlameParticle>().size = particleSize;
-            
 
             particleList.Add(particlePrefab.GetComponent<FlameParticle>());
-
-            particleList[i].pos = spawnSphere;
-            particleList[i].vel = ComputeVelocity();       
             
-            nrAlive++;
+            if(i < numberOfParticles)
+            {
+                particleList[i].isEnabled = true;
+                particleList[i].pos = spawnSphere;
+                particleList[i].vel = ComputeVelocity();
+                nrAlive++;
+            }
+                     
         }
     }
     private void ResetParticlePositions(FlameParticle particle)
     {
-        particle.pos = new Vector3(spawnArea.position.x,spawnArea.position.y,spawnArea.position.z);
+        particle.lifetime = particleLifetime;
+        particle.size = particleSize;
+        particle.pos = spawnArea.position + spawnRadius * Random.insideUnitSphere;
+        particle.vel = ComputeVelocity();
         
-
+        
     }
 
     private void OnDrawGizmos()
@@ -95,15 +110,21 @@ public class FlameSystem : MonoBehaviour
         Gizmos.color = Color.red;
         Gizmos.DrawWireSphere(spawnArea.position, spawnRadius);
 
-        if (particleList != null)
+        if (!particleList.IsUnityNull())
         {
             Gizmos.color=Color.red;
             foreach (var particle in particleList)
             {
-                Gizmos.DrawSphere(particle.pos,particle.size);
+                Gizmos.color = particle.colour;
+                if (particle.isEnabled)
+                {
+                    Gizmos.DrawSphere(particle.pos,particle.size);
+                }
             }
         }
+
         
+
     }
     void Update()
     {
@@ -113,19 +134,24 @@ public class FlameSystem : MonoBehaviour
     }
     private void FixedUpdate()
     {
-        for (int i = 0; i < particleList.Count; i++)
+        Time.timeScale = 1.0f;
+        
+        foreach (var flameParticle in particleList)
         {
             
-            if (particleList[i].lifetime < 0)
+            if (flameParticle.lifetime <= 0)
             {
-                ResetParticlePositions(particleList[i]);
-                particleList[i].lifetime = particleLifetime;
+                ResetParticlePositions(flameParticle);
             }
             else 
             {
-                Time.timeScale = 1.0f;
-                particleList[i].lifetime -= Time.fixedTime*Time.timeScale;
-                particleList[i].pos += particleList[i].vel * Time.fixedDeltaTime;
+                flameParticle.lifetime -= Time.fixedDeltaTime;
+                flameParticle.pos += flameParticle.vel * Time.fixedDeltaTime;
+
+                sizeRatio = flameParticle.lifetime / particleLifetime;
+
+                flameParticle.size = flameParticle.size * sizeRatio;
+                flameParticle.colour = gradient.Evaluate(sizeRatio-1);
             }
             
             
