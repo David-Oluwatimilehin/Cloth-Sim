@@ -10000,43 +10000,43 @@ MonoBehaviour:
   minSpeed: 1.5
   maxSpeed: 3
   particleLifetime: 3
-  spawnRadius: 0.2
+  spawnRadius: 0.5
   particleSize: 0.2
-  numberOfParticles: 120
-  emitterVelocity: {x: 0, y: 0, z: 0}
+  numberOfParticles: 15
+  emissionRate: 10
   particleList: []
   particlePrefab: {fileID: 6551781687213064157, guid: fd7bb1dd702987a46a1a56561c3a3e0e, type: 3}
   nrAlive: 0
   gradient:
     serializedVersion: 2
-    key0: {r: 1, g: 0.30237335, b: 0, a: 0.9843137}
-    key1: {r: 1, g: 0.6606157, b: 0, a: 1}
-    key2: {r: 1, g: 0.87034535, b: 0, a: 1}
-    key3: {r: 1, g: 0.94822514, b: 0.37421376, a: 0}
-    key4: {r: 1, g: 1, b: 1, a: 0}
+    key0: {r: 1, g: 0.92285115, b: 0.572327, a: 1}
+    key1: {r: 1, g: 0.8215669, b: 0, a: 1}
+    key2: {r: 1, g: 0.5295381, b: 0.24313724, a: 0}
+    key3: {r: 0.6226415, g: 0.04227247, b: 0, a: 0}
+    key4: {r: 0, g: 0, b: 0, a: 0}
     key5: {r: 0, g: 0, b: 0, a: 0}
     key6: {r: 0, g: 0, b: 0, a: 0}
     key7: {r: 0, g: 0, b: 0, a: 0}
-    ctime0: 386
-    ctime1: 12722
-    ctime2: 25829
-    ctime3: 57825
-    ctime4: 65535
+    ctime0: 7137
+    ctime1: 13493
+    ctime2: 22937
+    ctime3: 46067
+    ctime4: 0
     ctime5: 0
     ctime6: 0
     ctime7: 0
     atime0: 0
-    atime1: 32189
-    atime2: 51272
-    atime3: 65535
+    atime1: 46067
+    atime2: 65535
+    atime3: 0
     atime4: 0
     atime5: 0
     atime6: 0
     atime7: 0
     m_Mode: 0
     m_ColorSpace: -1
-    m_NumColorKeys: 5
-    m_NumAlphaKeys: 4
+    m_NumColorKeys: 4
+    m_NumAlphaKeys: 3
   maxNum: 200
 --- !u!4 &1139857752
 Transform:

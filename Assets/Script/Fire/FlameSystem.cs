@@ -25,7 +25,9 @@ public class FlameSystem : MonoBehaviour
     public float spawnRadius;
     public float particleSize;
     public int numberOfParticles;
-    public Vector3 emitterVelocity;
+
+    public float emissionRate = 50;
+    private float nextEmissionTime = 0.0f;
 
     public List<FlameParticle> particleList;
     public GameObject particlePrefab;
@@ -38,24 +40,18 @@ public class FlameSystem : MonoBehaviour
     
     void Start()
     {
-        cam = Camera.main;
-        
         particleList = new List<FlameParticle>();
         gravity = new Vector3(0, 0, 0);
         ParticleInitialisation();
         
-        if (cam == null)
-        {
-            Debug.LogError("Camera reference is null!");
-            return;
-        }
+        
     }
     public Vector3 ComputeVelocity()
     {
         Vector3 velocity = Vector3.zero;
         Vector3 normal = spawnArea.position.normalized;
         
-        velocity = new Vector3(Random.Range(-0.5f, 0.5f), Random.Range(minSpeed, maxSpeed), 0);
+        velocity = new Vector3(Random.Range(-1f, 1f), Random.Range(minSpeed, maxSpeed), 0);
         velocity *= normal.magnitude;
 
         velocity += gravity;
@@ -99,7 +95,6 @@ public class FlameSystem : MonoBehaviour
         particle.pos = spawnArea.position + spawnRadius * Random.insideUnitSphere;
         particle.vel = ComputeVelocity();
         
-        
     }
 
     private void OnDrawGizmos()
@@ -112,7 +107,7 @@ public class FlameSystem : MonoBehaviour
 
         if (!particleList.IsUnityNull())
         {
-            Gizmos.color=Color.red;
+            
             foreach (var particle in particleList)
             {
                 Gizmos.color = particle.colour;
@@ -128,47 +123,71 @@ public class FlameSystem : MonoBehaviour
     }
     void Update()
     {
+        while (Time.time >= nextEmissionTime)
+        {
+            EmitParticles();
+            nextEmissionTime += 1f / emissionRate; // Increment next emission time
+        }
 
+        foreach (var particle in particleList)
+        {
+            if (particle.isEnabled)
+            {
+                particle.lifetime -= Time.deltaTime;
+                sizeRatio = particle.lifetime / particleLifetime;
+
+                particle.size = particle.size * sizeRatio;
+                particle.colour = gradient.Evaluate(1 - particle.lifetime);
+
+            }
+        }
         
 
     }
     private void FixedUpdate()
     {
-        Time.timeScale = 1.0f;
-        
         foreach (var flameParticle in particleList)
         {
-            
             if (flameParticle.lifetime <= 0)
             {
                 ResetParticlePositions(flameParticle);
             }
             else 
             {
-                flameParticle.lifetime -= Time.fixedDeltaTime;
+                
                 flameParticle.pos += flameParticle.vel * Time.fixedDeltaTime;
 
-                sizeRatio = flameParticle.lifetime / particleLifetime;
-
-                flameParticle.size = flameParticle.size * sizeRatio;
-                flameParticle.colour = gradient.Evaluate(sizeRatio-1);
             }
-            
-            
-
         }
-
     }
 
+    private void EmitParticles()
+    {
+        Debug.Log("Function Called");
+        for(int i=0; i<particleList.Count; i++)
+        {
+            
+            if (!particleList[i].enabled)
+            {
+
+                particleList[i].lifetime = particleLifetime;
+                particleList[i].size = particleSize;
+                particleList[i].pos = spawnArea.position + Random.insideUnitSphere * spawnRadius;
+                particleList[i].vel = ComputeVelocity();
+                particleList[i].enabled = true;
+                nrAlive++;
+            }
+        }
+    }
 
     void LateUpdate()
     {
-        Vector3 newRotation = cam.transform.eulerAngles;
+        //Vector3 newRotation = cam.transform.eulerAngles;
 
-        newRotation.x = 0;
-        newRotation.z = 0;
+        //newRotation.x = 0;
+        //newRotation.z = 0;
 
-        transform.eulerAngles = newRotation;
+        //transform.eulerAngles = newRotation;
     }
 
 }
