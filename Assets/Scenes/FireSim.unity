@@ -9998,18 +9998,19 @@ MonoBehaviour:
   t: {fileID: 1139857752}
   spawnArea: {fileID: 1397442790}
   minSpeed: 1.5
-  maxSpeed: 3
-  particleLifetime: 3
-  spawnRadius: 0.5
+  maxSpeed: 4
+  particleLifetime: 1.25
+  spawnRadius: 0.35
   particleSize: 0.2
   numberOfParticles: 15
-  emissionRate: 10
+  emissionRate: 5
+  nextEmissionTime: -0.1
   particleList: []
   particlePrefab: {fileID: 6551781687213064157, guid: fd7bb1dd702987a46a1a56561c3a3e0e, type: 3}
   nrAlive: 0
   gradient:
     serializedVersion: 2
-    key0: {r: 1, g: 0.92285115, b: 0.572327, a: 1}
+    key0: {r: 1, g: 0.92285115, b: 0.572327, a: 0.75686276}
     key1: {r: 1, g: 0.8215669, b: 0, a: 1}
     key2: {r: 1, g: 0.5295381, b: 0.24313724, a: 0}
     key3: {r: 0.6226415, g: 0.04227247, b: 0, a: 0}
@@ -10017,10 +10018,10 @@ MonoBehaviour:
     key5: {r: 0, g: 0, b: 0, a: 0}
     key6: {r: 0, g: 0, b: 0, a: 0}
     key7: {r: 0, g: 0, b: 0, a: 0}
-    ctime0: 7137
-    ctime1: 13493
-    ctime2: 22937
-    ctime3: 46067
+    ctime0: 0
+    ctime1: 8674
+    ctime2: 30647
+    ctime3: 50115
     ctime4: 0
     ctime5: 0
     ctime6: 0
