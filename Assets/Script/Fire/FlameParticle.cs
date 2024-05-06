@@ -8,9 +8,9 @@ public class FlameParticle : MonoBehaviour
     //TODO: Make the position a transform
     
     public Vector3 pos;
-    Vector3 oldPos;
+    public Vector3 oldPos;
     public Vector3 vel;
-
+    public 
     int energy;
     public Color colour;
     

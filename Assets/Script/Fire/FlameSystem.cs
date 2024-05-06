@@ -67,17 +67,20 @@ public class FlameSystem : MonoBehaviour
             //particlesList.pos = new Vector3(spawnSphere.x, spawnSphere.y, Random.Range(-1, 1));
             //spawnSphere = new Vector3(Random.Range(spawnSphere.x, spawnSphere.y), Random.Range(-1, 1));
 
-            spawnSphere = spawnArea.position;
-            spawnSphere += Random.insideUnitSphere * spawnRadius;
+            spawnSphere = spawnArea.position+ Random.insideUnitSphere * spawnRadius;
+            
             
             particlePrefab = Instantiate(particlePrefab, spawnSphere, Quaternion.identity);
             particlePrefab.name = "Particle: " + (i + 1);
             particlePrefab.transform.SetParent(spawnArea, false);
 
+
             particlePrefab.GetComponent<FlameParticle>().isEnabled = false;
             particlePrefab.GetComponent<FlameParticle>().lifetime = particleLifetime;
             particlePrefab.GetComponent<FlameParticle>().size = particleSize;
-            particlePrefab.GetComponent<FlameParticle>().pos = Vector3.zero;
+            particlePrefab.GetComponent<FlameParticle>().oldPos = spawnSphere;
+            particlePrefab.GetComponent<FlameParticle>().pos = particlePrefab.GetComponent<FlameParticle>().oldPos;
+            
             particlePrefab.GetComponent<FlameParticle>().vel = Vector3.zero;
 
             particleList.Add(particlePrefab.GetComponent<FlameParticle>());
@@ -85,7 +88,7 @@ public class FlameSystem : MonoBehaviour
             if(i < numberOfParticles)
             {
                 particleList[i].isEnabled = true;
-                particleList[i].pos = spawnSphere;
+                //particleList[i].pos = spawnSphere;
                 particleList[i].vel = ComputeVelocity();
                 nrAlive++;
             }
@@ -95,9 +98,9 @@ public class FlameSystem : MonoBehaviour
     private void ResetParticlePositions(FlameParticle particle)
     {
         particle.lifetime = particleLifetime;
-        //particle.size = particleSize;
-        //particle.pos = spawnArea.position + spawnRadius * Random.insideUnitSphere;
-        //particle.vel = ComputeVelocity();
+        particle.size = particleSize;
+        particle.pos = spawnArea.position + spawnRadius * Random.insideUnitSphere;
+        particle.vel = ComputeVelocity();
         particle.isEnabled = false;
         
     }
@@ -125,11 +128,12 @@ public class FlameSystem : MonoBehaviour
     {
         //while (Time.time >= nextEmissionTime)
         //{
-            
+
         //     EmitParticles();
-            
+
         //    nextEmissionTime += 1f / emissionRate; // Increment next emission time
         //}
+        
         if (Time.time >= nextEmissionTime)
         {
             EmitParticles();
@@ -172,12 +176,10 @@ public class FlameSystem : MonoBehaviour
 
     private void EmitParticles()
     {
-        for(int i = 0; i<particleList.Count; i++)
-        {
+        for(int i = 0; i<particleList.Count/2; i++) {
             
-            if (!particleList[i].isEnabled)
-            {
-                
+            if (!particleList[i].isEnabled) {
+
                 particleList[i].isEnabled = true;
                 particleList[i].lifetime = particleLifetime;
                 particleList[i].size = particleSize;
@@ -186,8 +188,6 @@ public class FlameSystem : MonoBehaviour
 
                 particleList[i].pos = spawnArea.position + spawnRadius * Random.insideUnitSphere;
                 particleList[i].vel = ComputeVelocity();
-
-                nrAlive++;
 
             }
             

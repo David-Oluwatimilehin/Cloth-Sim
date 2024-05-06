@@ -9997,14 +9997,14 @@ MonoBehaviour:
   boxExtents: {x: 5, y: 5, z: 3}
   t: {fileID: 1139857752}
   spawnArea: {fileID: 1397442790}
-  minSpeed: 1.5
-  maxSpeed: 4
-  particleLifetime: 1.25
+  minSpeed: 1
+  maxSpeed: 4.5
+  particleLifetime: 2.25
   spawnRadius: 0.35
   particleSize: 0.2
   numberOfParticles: 15
-  emissionRate: 5
-  nextEmissionTime: -0.1
+  emissionRate: 10
+  nextEmissionTime: 0.5
   particleList: []
   particlePrefab: {fileID: 6551781687213064157, guid: fd7bb1dd702987a46a1a56561c3a3e0e, type: 3}
   nrAlive: 0
