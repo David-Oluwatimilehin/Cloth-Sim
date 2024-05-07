@@ -90,7 +90,7 @@ public class ClothSim : MonoBehaviour
         sumForces = Vector3.zero;
         DragForce = Vector3.zero;
 
-        particleColour = new Color(0, 0, 0);
+        
         SetupPoints();
         
         
@@ -236,8 +236,8 @@ public class ClothSim : MonoBehaviour
             Vector3 forceAB = springConstant * error * dirAB.normalized;
             Vector3 forceCB = springConstant * error * dirCB.normalized;
 
-            bendingSpring.particleOne.position += forceAB;
-            bendingSpring.particleThree.position += forceCB;
+            //bendingSpring.particleOne.position += forceAB;
+            //bendingSpring.particleThree.position += forceCB;
         }
     }
 

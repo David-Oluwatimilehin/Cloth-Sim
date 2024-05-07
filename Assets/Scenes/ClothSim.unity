@@ -191,6 +191,7 @@ MonoBehaviour:
   particleLifetime: 2.25
   spawnRadius: 0.35
   particleSize: 1
+  particleMinSize: 0.2
   numberOfParticles: 15
   emissionRate: 10
   nextEmissionTime: 0.5
@@ -368,15 +369,18 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 454971d552dbf9d46a8ac1480a17c503, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  cam: {fileID: 0}
   rows: 10
   columns: 10
   spacing: 1
-  springConstant: 1.06
-  simulateWind: 0
+  springConstant: 1.4
+  hasStraightLine: 0
+  simulateWind: 1
   airDensity: 1.23
   airResistanceDragCoef: 0.5
   windSpeed: 45
   dragCooeficient: 0.4
+  particlePrefab: {fileID: 7329338134658756767, guid: 2686928b79a446f42b4e93f49db8a9e9, type: 3}
   t: {fileID: 1365332114}
   showDiagConstraints: 0
   showStructuralConstraints: 1
