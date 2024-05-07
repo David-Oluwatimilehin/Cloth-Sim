@@ -24,10 +24,11 @@ public class FlameSystem : MonoBehaviour
     
     public float spawnRadius;
     public float particleSize;
+    public float particleMinSize;
     public int numberOfParticles;
 
     public float emissionRate = 10;
-    public float nextEmissionTime = 0.0f;
+    public float nextEmissionTime;
 
     public List<FlameParticle> particleList;
     public GameObject particlePrefab;
@@ -53,7 +54,7 @@ public class FlameSystem : MonoBehaviour
         velocity = Vector3.zero;
         normal = spawnArea.position.normalized;
         
-        velocity = new Vector3(Random.Range(-1f, 1f), Random.Range(minSpeed, maxSpeed), 0/*Random.Range(-0.5f, 0.5f)*/);
+        velocity = new Vector3(Random.Range(-1f, 1f), Random.Range(minSpeed, maxSpeed), 0);
         velocity *= normal.magnitude;
 
         velocity += gravity;
@@ -68,8 +69,7 @@ public class FlameSystem : MonoBehaviour
             //spawnSphere = new Vector3(Random.Range(spawnSphere.x, spawnSphere.y), Random.Range(-1, 1));
 
             spawnSphere = spawnArea.position+ Random.insideUnitSphere * spawnRadius;
-            
-            
+                        
             particlePrefab = Instantiate(particlePrefab, spawnSphere, Quaternion.identity);
             particlePrefab.name = "Particle: " + (i + 1);
             particlePrefab.transform.SetParent(spawnArea, false);
@@ -107,32 +107,29 @@ public class FlameSystem : MonoBehaviour
 
     private void OnDrawGizmos()
     {
-        Gizmos.color = Color.green;
-        Gizmos.DrawWireCube(transform.position, boxExtents);
+        //Gizmos.color = Color.green;
+        //Gizmos.DrawWireCube(transform.position, boxExtents);
         
         Gizmos.color = Color.red;
         Gizmos.DrawWireSphere(spawnArea.position, spawnRadius);
 
-
-        foreach (var particle in particleList)
+        if(!particleList.IsUnityNull())
         {
-            Gizmos.color = particle.colour;
-            if (particle.isEnabled)
+            foreach (var particle in particleList)
             {
-                Gizmos.DrawSphere(particle.pos, particle.size);
+                Gizmos.color = particle.colour;
+                if (particle.isEnabled)
+                {
+                    Gizmos.DrawSphere(particle.pos, particle.size);
+                }
             }
+
         }
 
     }
     void Update()
     {
-        //while (Time.time >= nextEmissionTime)
-        //{
-
-        //     EmitParticles();
-
-        //    nextEmissionTime += 1f / emissionRate; // Increment next emission time
-        //}
+        
         
         if (Time.time >= nextEmissionTime)
         {
@@ -147,7 +144,7 @@ public class FlameSystem : MonoBehaviour
                 particle.lifetime -= Time.deltaTime;
                 sizeRatio = particle.lifetime / particleLifetime;
 
-                particle.size = Mathf.Clamp(particle.size, particle.size * sizeRatio, 0.05f);
+                particle.size = Mathf.Clamp(particle.size, particle.size * sizeRatio, particleMinSize);
                 particle.colour = gradient.Evaluate(particleLifetime - particle.lifetime);
 
             }
@@ -193,23 +190,6 @@ public class FlameSystem : MonoBehaviour
             
 
         }
-        //for(int i=0; i<particleList.Count; i++)
-        //{
-        //    //Debug.Log("Function Called " + i + " time");
-        //    for(int j=0; j<numberOfParticles; j++)
-        //    {
-        //        if (!particleList[i].enabled)
-        //        {
-        //            particleList[i].enabled = true;
-        //            particleList[i].lifetime = particleLifetime;
-        //            particleList[i].size = particleSize;
-        //            particleList[i].pos = spawnArea.position + Random.insideUnitSphere * spawnRadius;
-        //            particleList[i].vel = ComputeVelocity();
-                    
-        //            nrAlive++;
-        //        }
-        //    }
-        //}
     }
 
     void LateUpdate()

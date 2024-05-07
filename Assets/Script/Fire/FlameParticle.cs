@@ -10,8 +10,7 @@ public class FlameParticle : MonoBehaviour
     public Vector3 pos;
     public Vector3 oldPos;
     public Vector3 vel;
-    public 
-    int energy;
+    public int energy;
     public Color colour;
     
     public bool isEnabled;
@@ -20,21 +19,26 @@ public class FlameParticle : MonoBehaviour
     
     private SpriteRenderer spriteSheet;
     private SphereCollider col;
-    
+    private Transform t;
 
     public void Start()
     {
-        spriteSheet= GetComponent<SpriteRenderer>();
-        spriteSheet.size = new Vector2(size,size);
         
-        col=GetComponent<SphereCollider>();   
-        
+        col=GetComponent<SphereCollider>();
+        col.radius = size;
+
+        t = GetComponent<Transform>();
+        t.position = pos;
+    }
+    private void OnCollisionEnter(Collision collision)
+    {
+        Debug.Log("Something is happening");
     }
 
     public void Update()
     {
-        col.radius = size;
         
-        transform.position = pos;
+        
+        t.position = pos;
     }
 }
