@@ -65,8 +65,6 @@ public class FlameSystem : MonoBehaviour
     {
         for (int i=0; i<maxNum; i++)
         {
-            //particlesList.pos = new Vector3(spawnSphere.x, spawnSphere.y, Random.Range(-1, 1));
-            //spawnSphere = new Vector3(Random.Range(spawnSphere.x, spawnSphere.y), Random.Range(-1, 1));
 
             spawnSphere = spawnArea.position+ Random.insideUnitSphere * spawnRadius;
                         
@@ -134,7 +132,7 @@ public class FlameSystem : MonoBehaviour
         if (Time.time >= nextEmissionTime)
         {
             EmitParticles();
-            nextEmissionTime = Time.time + 1f / emissionRate; // Calculate next emission time
+            nextEmissionTime = Time.time + 1f / emissionRate;
         }
 
         foreach (var particle in particleList)
@@ -181,8 +179,6 @@ public class FlameSystem : MonoBehaviour
                 particleList[i].lifetime = particleLifetime;
                 particleList[i].size = particleSize;
 
-                //Debug.LogError("Function Called");
-
                 particleList[i].pos = spawnArea.position + spawnRadius * Random.insideUnitSphere;
                 particleList[i].vel = ComputeVelocity();
 
@@ -192,14 +188,6 @@ public class FlameSystem : MonoBehaviour
         }
     }
 
-    void LateUpdate()
-    {
-        //Vector3 newRotation = cam.transform.eulerAngles;
-
-        //newRotation.x = 0;
-        //newRotation.z = 0;
-
-        //transform.eulerAngles = newRotation;
-    }
+    
 
 }

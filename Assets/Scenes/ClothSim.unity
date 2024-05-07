@@ -370,12 +370,12 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   cam: {fileID: 0}
-  rows: 10
-  columns: 10
+  rows: 12
+  columns: 12
   spacing: 1
   springConstant: 1.4
-  hasStraightLine: 0
-  simulateWind: 1
+  hasStraightLine: 1
+  simulateWind: 0
   airDensity: 1.23
   airResistanceDragCoef: 0.5
   windSpeed: 45
