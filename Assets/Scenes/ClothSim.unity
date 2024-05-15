@@ -38,7 +38,7 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 0}
-  m_IndirectSpecularColor: {r: 0.44657874, g: 0.49641275, b: 0.5748172, a: 1}
+  m_IndirectSpecularColor: {r: 0.44657874, g: 0.49641275, b: 0.5748171, a: 1}
   m_UseRadianceAmbientProbe: 0
 --- !u!157 &3
 LightmapSettings:
@@ -246,19 +246,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 454971d552dbf9d46a8ac1480a17c503, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  rows: 10
-  columns: 10
+  rows: 20
+  columns: 16
   spacing: 1
-  springConstant: 1.41
+  springConstant: 1.61
+  gravity: -9.81
+  pinStraight: 1
   simulateWind: 0
   airDensity: 1.23
   airResistanceDragCoef: 0.5
-  windSpeed: 45
+  windSpeed: 60
   dragCooeficient: 0.4
   t: {fileID: 1365332114}
-  showDiagConstraints: 1
+  showDiagConstraints: 0
   showStructuralConstraints: 1
-  showParticles: 0
+  showParticles: 1
   particleColour: {r: 0, g: 1, b: 0.077444315, a: 0}
   connectorMaterial: {fileID: 2100000, guid: 644317fa152c685479a50dc43adf111c, type: 2}
   particleSize: 0.1
@@ -307,37 +309,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_RootOrder: 3
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &1736019677
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1736019678}
-  m_Layer: 0
-  m_Name: spawn Position
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &1736019678
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1736019677}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 50, z: -33.206337}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 0}
-  m_RootOrder: 4
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1837617882
 GameObject:
@@ -400,7 +371,7 @@ Camera:
   far clip plane: 1000
   field of view: 90
   orthographic: 1
-  orthographic size: 15.02
+  orthographic size: 30
   m_Depth: -1
   m_CullingMask:
     serializedVersion: 2

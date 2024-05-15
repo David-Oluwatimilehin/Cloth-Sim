@@ -14,9 +14,7 @@ public class Particle
 
     public float energy;
     public float mass = 1f;
-    public Vector2 acc = new Vector2();
+    public Vector2 acc;
 
-    public float friction = 0.60f;
-    public float gravity = -0.981f;
-    public float dampValue = 0.4f;
+    
 }
